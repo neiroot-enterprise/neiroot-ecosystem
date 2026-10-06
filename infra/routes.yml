@@ -1,0 +1,33 @@
+http:
+  routers:
+    identity:
+      rule: PathPrefix(`/auth`)
+      entryPoints: [websecure]
+      service: identity
+      tls: {}
+      priority: 30
+    api:
+      rule: PathPrefix(`/api/v1`) || PathPrefix(`/api/auth`)
+      entryPoints: [websecure]
+      service: bff
+      tls: {}
+      priority: 20
+    web:
+      rule: PathPrefix(`/`)
+      entryPoints: [websecure]
+      service: web
+      tls: {}
+  services:
+    identity:
+      loadBalancer:
+        servers: [{url: 'http://keycloak:8080'}]
+    bff:
+      loadBalancer:
+        servers: [{url: 'http://bff:8080'}]
+    web:
+      loadBalancer:
+        servers: [{url: 'http://web:8080'}]
+tls:
+  certificates:
+    - certFile: /certs/localhost.pem
+      keyFile: /certs/localhost-key.pem

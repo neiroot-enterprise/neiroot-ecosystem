@@ -1,0 +1,474 @@
+{
+  "version": "0.7",
+  "width": 330,
+  "date": "2026-10-02",
+  "status": "proposed",
+  "nodes": [
+    {
+      "id": "Web",
+      "name": "Веб-интерфейс",
+      "st": "component",
+      "stack": [
+        "TypeScript",
+        "React"
+      ],
+      "purpose": [
+        "Рабочее место",
+        "сотрудников бизнеса"
+      ]
+    },
+    {
+      "id": "Gateway",
+      "name": "API Gateway / Web BFF",
+      "st": "component",
+      "stack": [
+        "Go / chi",
+        "Traefik",
+        "PostgreSQL bff (сессии)"
+      ],
+      "purpose": [
+        "Единый вход в API",
+        "Маршрутизация запросов",
+        "Агрегация ответов"
+      ]
+    },
+    {
+      "id": "Auth",
+      "name": "Авторизация",
+      "st": "component",
+      "stack": [
+        "Keycloak",
+        "PostgreSQL auth"
+      ],
+      "purpose": [
+        "Вход и SSO",
+        "Учётные записи",
+        "Проверка входа"
+      ]
+    },
+    {
+      "id": "Core",
+      "name": "Ядро приложения",
+      "st": "microservice",
+      "stack": [
+        "Go",
+        "chi / net/http",
+        "PostgreSQL core"
+      ],
+      "purpose": [
+        "Общие функции SaaS",
+        "Организации и доступ",
+        "Настройки платформы"
+      ]
+    },
+    {
+      "id": "Logistics",
+      "name": "Логистика",
+      "st": "microservice",
+      "stack": [
+        "Go / chi",
+        "PostgreSQL logistics"
+      ],
+      "purpose": [
+        "Управление логистикой",
+        "Планирование перевозок"
+      ]
+    },
+    {
+      "id": "CRM",
+      "name": "CRM",
+      "st": "microservice",
+      "stack": [
+        "Go / chi",
+        "PostgreSQL crm"
+      ],
+      "purpose": [
+        "Клиенты и сделки",
+        "Управление продажами"
+      ]
+    },
+    {
+      "id": "Investments",
+      "name": "Инвестиции",
+      "st": "microservice",
+      "stack": [
+        "Go / chi",
+        "PostgreSQL investments"
+      ],
+      "purpose": [
+        "Инвестиционные процессы",
+        "Учёт и анализ"
+      ]
+    },
+    {
+      "id": "Rental",
+      "name": "Аренда машин",
+      "st": "microservice",
+      "stack": [
+        "Go / chi",
+        "PostgreSQL rental"
+      ],
+      "purpose": [
+        "Аренда автомобилей",
+        "Брони и договоры"
+      ]
+    },
+    {
+      "id": "Tasks",
+      "name": "Задачи",
+      "st": "microservice",
+      "stack": [
+        "Go / chi",
+        "PostgreSQL tasks"
+      ],
+      "purpose": [
+        "Общие задачи бизнеса",
+        "Исполнители и сроки",
+        "Статусы выполнения"
+      ]
+    },
+    {
+      "id": "Analytics",
+      "name": "Аналитика",
+      "st": "microservice",
+      "stack": [
+        "Python / FastAPI",
+        "PostgreSQL analytics_meta"
+      ],
+      "purpose": [
+        "Сбор бизнес-данных",
+        "Отчёты и показатели"
+      ]
+    },
+    {
+      "id": "Marketer",
+      "name": "AI-маркетолог",
+      "st": "microservice",
+      "stack": [
+        "Python / FastAPI",
+        "PostgreSQL ai_marketer"
+      ],
+      "purpose": [
+        "Маркетинговые задачи",
+        "Контент и кампании"
+      ]
+    },
+    {
+      "id": "Analyst",
+      "name": "AI-аналитик",
+      "st": "microservice",
+      "stack": [
+        "Python / FastAPI",
+        "PostgreSQL ai_analyst"
+      ],
+      "purpose": [
+        "Анализ показателей",
+        "Выводы и рекомендации"
+      ]
+    },
+    {
+      "id": "Sales",
+      "name": "AI-продажник",
+      "st": "microservice",
+      "stack": [
+        "Python / FastAPI",
+        "PostgreSQL ai_sales"
+      ],
+      "purpose": [
+        "Общение с клиентами",
+        "Помощь в продажах"
+      ]
+    },
+    {
+      "id": "Secretary",
+      "name": "AI-секретарь",
+      "st": "microservice",
+      "stack": [
+        "Python / FastAPI",
+        "PostgreSQL ai_secretary"
+      ],
+      "purpose": [
+        "Обработка поручений",
+        "Помощь сотрудникам"
+      ]
+    },
+    {
+      "id": "Events",
+      "name": "Брокер событий",
+      "st": "component",
+      "stack": [
+        "NATS JetStream"
+      ],
+      "purpose": [
+        "Передача событий",
+        "Развязка сервисов",
+        "Повторная доставка"
+      ]
+    },
+    {
+      "id": "AnalyticsDB",
+      "name": "Аналитическая БД",
+      "st": "database",
+      "stack": [
+        "ClickHouse"
+      ],
+      "purpose": [
+        "Хранение витрин",
+        "Быстрые выборки",
+        "и агрегации"
+      ]
+    },
+    {
+      "id": "LLM",
+      "name": "Провайдеры AI-моделей",
+      "st": "external",
+      "stack": [
+        "LLM API"
+      ],
+      "purpose": [
+        "Генерация ответов",
+        "Выполнение AI-задач"
+      ]
+    },
+    {
+      "id": "Cache",
+      "name": "Кеш",
+      "st": "component",
+      "stack": [
+        "Redis"
+      ],
+      "purpose": [
+        "Ускорение запросов",
+        "Временные данные"
+      ]
+    },
+    {
+      "id": "Files",
+      "name": "Файловое хранилище",
+      "st": "component",
+      "stack": [
+        "S3 API",
+        "Провайдер уточняется"
+      ],
+      "purpose": [
+        "Документы и файлы",
+        "Импорт и экспорт"
+      ]
+    },
+    {
+      "id": "Monitoring",
+      "name": "Мониторинг",
+      "st": "component",
+      "stack": [
+        "OpenTelemetry",
+        "Prometheus / Grafana",
+        "Loki / Tempo"
+      ],
+      "purpose": [
+        "Метрики, логи, трассы",
+        "Диагностика и алерты"
+      ]
+    },
+    {
+      "id": "Backup",
+      "name": "Резервные копии",
+      "st": "component",
+      "stack": [
+        "pgBackRest",
+        "ClickHouse BACKUP",
+        "rclone / S3"
+      ],
+      "purpose": [
+        "Сохранение копий",
+        "Восстановление данных"
+      ]
+    }
+  ],
+  "edges": [
+    [
+      "Web",
+      "Gateway",
+      "HTTPS"
+    ],
+    [
+      "Web",
+      "Auth",
+      "Вход / OIDC"
+    ],
+    [
+      "Gateway",
+      "Auth",
+      "JWT / JWKS",
+      true
+    ],
+    [
+      "Gateway",
+      "Core",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Logistics",
+      "API"
+    ],
+    [
+      "Gateway",
+      "CRM",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Investments",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Rental",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Analytics",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Marketer",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Analyst",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Sales",
+      "API"
+    ],
+    [
+      "Gateway",
+      "Secretary",
+      "API"
+    ],
+    [
+      "Analyst",
+      "Analytics",
+      "API аналитики"
+    ],
+    [
+      "Sales",
+      "CRM",
+      "API CRM"
+    ],
+    [
+      "Sales",
+      "Rental",
+      "Возможная связь",
+      true
+    ],
+    [
+      "Core",
+      "Events",
+      "События"
+    ],
+    [
+      "Logistics",
+      "Events",
+      "События"
+    ],
+    [
+      "CRM",
+      "Events",
+      "События"
+    ],
+    [
+      "Investments",
+      "Events",
+      "События"
+    ],
+    [
+      "Rental",
+      "Events",
+      "События"
+    ],
+    [
+      "Events",
+      "Analytics",
+      "Данные для витрин"
+    ],
+    [
+      "Analytics",
+      "AnalyticsDB",
+      "Чтение / запись"
+    ],
+    [
+      "Marketer",
+      "LLM",
+      "LLM API"
+    ],
+    [
+      "Analyst",
+      "LLM",
+      "LLM API"
+    ],
+    [
+      "Sales",
+      "LLM",
+      "LLM API"
+    ],
+    [
+      "Secretary",
+      "LLM",
+      "LLM API"
+    ],
+    [
+      "Core",
+      "Cache",
+      "Кеш по потребности",
+      true
+    ],
+    [
+      "Core",
+      "Files",
+      "Файлы"
+    ],
+    [
+      "Monitoring",
+      "Gateway",
+      "Телеметрия всех сервисов",
+      true
+    ],
+    [
+      "Backup",
+      "AnalyticsDB",
+      "Резервное копирование",
+      true
+    ],
+    [
+      "Gateway",
+      "Tasks",
+      "API"
+    ],
+    [
+      "CRM",
+      "Tasks",
+      "API задач"
+    ],
+    [
+      "Logistics",
+      "Tasks",
+      "API задач"
+    ],
+    [
+      "Secretary",
+      "Tasks",
+      "API задач"
+    ],
+    [
+      "Tasks",
+      "Events",
+      "События задач"
+    ]
+  ]
+}

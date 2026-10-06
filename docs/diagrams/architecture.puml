@@ -1,0 +1,225 @@
+@startuml saas_architecture
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+top to bottom direction
+title Neiroot Enterprise v1 — архитектура SaaS v0.7
+
+class "Веб-интерфейс" as Web <<component>> {
+  TypeScript
+  React
+  --
+  Рабочее место
+  сотрудников бизнеса
+}
+
+class "API Gateway / Web BFF" as Gateway <<component>> {
+  Go / chi
+  Traefik
+  PostgreSQL bff (сессии)
+  --
+  Единый вход в API
+  Маршрутизация запросов
+  Агрегация ответов
+}
+
+class "Авторизация" as Auth <<component>> {
+  Keycloak
+  PostgreSQL auth
+  --
+  Вход и SSO
+  Учётные записи
+  Проверка входа
+}
+
+class "Ядро приложения" as Core <<microservice>> {
+  Go
+  chi / net/http
+  PostgreSQL core
+  --
+  Общие функции SaaS
+  Организации и доступ
+  Настройки платформы
+}
+
+class "Логистика" as Logistics <<microservice>> {
+  Go / chi
+  PostgreSQL logistics
+  --
+  Управление логистикой
+  Планирование перевозок
+}
+
+class "CRM" as CRM <<microservice>> {
+  Go / chi
+  PostgreSQL crm
+  --
+  Клиенты и сделки
+  Управление продажами
+}
+
+class "Инвестиции" as Investments <<microservice>> {
+  Go / chi
+  PostgreSQL investments
+  --
+  Инвестиционные процессы
+  Учёт и анализ
+}
+
+class "Аренда машин" as Rental <<microservice>> {
+  Go / chi
+  PostgreSQL rental
+  --
+  Аренда автомобилей
+  Брони и договоры
+}
+
+class "Задачи" as Tasks <<microservice>> {
+  Go / chi
+  PostgreSQL tasks
+  --
+  Общие задачи бизнеса
+  Исполнители и сроки
+  Статусы выполнения
+}
+
+class "Аналитика" as Analytics <<microservice>> {
+  Python / FastAPI
+  PostgreSQL analytics_meta
+  --
+  Сбор бизнес-данных
+  Отчёты и показатели
+}
+
+class "AI-маркетолог" as Marketer <<microservice>> {
+  Python / FastAPI
+  PostgreSQL ai_marketer
+  --
+  Маркетинговые задачи
+  Контент и кампании
+}
+
+class "AI-аналитик" as Analyst <<microservice>> {
+  Python / FastAPI
+  PostgreSQL ai_analyst
+  --
+  Анализ показателей
+  Выводы и рекомендации
+}
+
+class "AI-продажник" as Sales <<microservice>> {
+  Python / FastAPI
+  PostgreSQL ai_sales
+  --
+  Общение с клиентами
+  Помощь в продажах
+}
+
+class "AI-секретарь" as Secretary <<microservice>> {
+  Python / FastAPI
+  PostgreSQL ai_secretary
+  --
+  Обработка поручений
+  Помощь сотрудникам
+}
+
+class "Брокер событий" as Events <<component>> {
+  NATS JetStream
+  --
+  Передача событий
+  Развязка сервисов
+  Повторная доставка
+}
+
+class "Аналитическая БД" as AnalyticsDB <<database>> {
+  ClickHouse
+  --
+  Хранение витрин
+  Быстрые выборки
+  и агрегации
+}
+
+class "Провайдеры AI-моделей" as LLM <<external>> {
+  LLM API
+  --
+  Генерация ответов
+  Выполнение AI-задач
+}
+
+class "Кеш" as Cache <<component>> {
+  Redis
+  --
+  Ускорение запросов
+  Временные данные
+}
+
+class "Файловое хранилище" as Files <<component>> {
+  S3 API
+  Провайдер уточняется
+  --
+  Документы и файлы
+  Импорт и экспорт
+}
+
+class "Мониторинг" as Monitoring <<component>> {
+  OpenTelemetry
+  Prometheus / Grafana
+  Loki / Tempo
+  --
+  Метрики, логи, трассы
+  Диагностика и алерты
+}
+
+class "Резервные копии" as Backup <<component>> {
+  pgBackRest
+  ClickHouse BACKUP
+  rclone / S3
+  --
+  Сохранение копий
+  Восстановление данных
+}
+
+Web --> Gateway : HTTPS
+Web --> Auth : Вход / OIDC
+Gateway ..> Auth : JWT / JWKS
+Gateway --> Core : API
+Gateway --> Logistics : API
+Gateway --> CRM : API
+Gateway --> Investments : API
+Gateway --> Rental : API
+Gateway --> Analytics : API
+Gateway --> Marketer : API
+Gateway --> Analyst : API
+Gateway --> Sales : API
+Gateway --> Secretary : API
+Analyst --> Analytics : API аналитики
+Sales --> CRM : API CRM
+Sales ..> Rental : Возможная связь
+Core --> Events : События
+Logistics --> Events : События
+CRM --> Events : События
+Investments --> Events : События
+Rental --> Events : События
+Events --> Analytics : Данные для витрин
+Analytics --> AnalyticsDB : Чтение / запись
+Marketer --> LLM : LLM API
+Analyst --> LLM : LLM API
+Sales --> LLM : LLM API
+Secretary --> LLM : LLM API
+Core ..> Cache : Кеш по потребности
+Core --> Files : Файлы
+Monitoring ..> Gateway : Телеметрия всех сервисов
+Backup ..> AnalyticsDB : Резервное копирование
+Gateway --> Tasks : API
+CRM --> Tasks : API задач
+Logistics --> Tasks : API задач
+Secretary --> Tasks : API задач
+Tasks --> Events : События задач
+
+legend bottom
+Технологии предложены. Ширина блоков в SVG: 330 pt.
+Микросервис → модульный монолит → модули с Clean Architecture и портами/адаптерами.
+Мониторинг и резервные копии охватывают всю платформу.
+endlegend
+@enduml

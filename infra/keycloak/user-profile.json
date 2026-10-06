@@ -1,0 +1,12 @@
+{
+ "attributes":[
+  {"name":"username","displayName":"Телефон","required":{"roles":["user","admin"]},"permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"length":{"min":9,"max":16},"pattern":{"pattern":"^\\+[1-9][0-9]{7,14}$","error-message":"invalidPhone"}},"annotations":{"inputType":"text","inputHelperTextBefore":"Например +79990000000"}},
+  {"name":"email","displayName":"Email","required":{"roles":["user","admin"]},"permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"email":{},"length":{"max":254}}},
+  {"name":"full_name","displayName":"ФИО","required":{"roles":["user","admin"]},"permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"length":{"min":1,"max":200}}},
+  {"name":"lastName","displayName":"${lastName}","required":{"roles":["user"]},"permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"length":{"min":1,"max":80}}},
+  {"name":"firstName","displayName":"${firstName}","required":{"roles":["user"]},"permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"length":{"min":1,"max":80}}},
+  {"name":"middle_name","displayName":"${middleName}","permissions":{"view":["user","admin"],"edit":["user","admin"]},"validations":{"length":{"max":38}}},
+  {"name":"provisioning_id","permissions":{"view":["admin"],"edit":["admin"]},"validations":{"length":{"max":100}}}
+ ],
+ "groups":[],"unmanagedAttributePolicy":null
+}

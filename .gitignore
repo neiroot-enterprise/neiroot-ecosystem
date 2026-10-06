@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.local/
+node_modules/
+dist/
+playwright-report/
+test-results/
+*.exe
+*.log
+coverage/
+tmp/
+.DS_Store
+*.pem
+*.key

@@ -1,0 +1,36 @@
+-- +goose Up
+CREATE SCHEMA settings;
+CREATE SCHEMA company;
+CREATE SCHEMA money;
+CREATE SCHEMA sales;
+CREATE TABLE settings.tenants(id uuid PRIMARY KEY,name text NOT NULL CHECK(length(name) BETWEEN 1 AND 120),owner_sub text NOT NULL UNIQUE,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE settings.memberships(tenant_id uuid NOT NULL REFERENCES settings.tenants(id),employee_id uuid NOT NULL,subject text,email text NOT NULL,role text NOT NULL CHECK(role IN('owner','admin','user')),PRIMARY KEY(tenant_id,employee_id),UNIQUE(tenant_id,subject));
+CREATE UNIQUE INDEX memberships_one_owner ON settings.memberships(tenant_id) WHERE role='owner';
+CREATE TABLE settings.invitations(id uuid PRIMARY KEY,tenant_id uuid NOT NULL,employee_id uuid NOT NULL,token_hash text NOT NULL UNIQUE,email text NOT NULL,expires_at timestamptz NOT NULL,accepted_by text,revoked_at timestamptz,created_at timestamptz NOT NULL DEFAULT now(),FOREIGN KEY(tenant_id,employee_id) REFERENCES settings.memberships(tenant_id,employee_id));
+CREATE INDEX invitations_employee ON settings.invitations(tenant_id,employee_id,created_at DESC);
+CREATE TABLE company.employees(id uuid PRIMARY KEY,tenant_id uuid NOT NULL,full_name text NOT NULL CHECK(length(full_name) BETWEEN 1 AND 200),phone text NOT NULL,email text NOT NULL,subject text,access_state text NOT NULL CHECK(access_state IN('pending','active','error')),idempotency_key text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(tenant_id,idempotency_key),UNIQUE(tenant_id,phone));
+CREATE UNIQUE INDEX employees_email ON company.employees(tenant_id,lower(email));
+CREATE UNIQUE INDEX employees_subject ON company.employees(tenant_id,subject) WHERE subject IS NOT NULL;
+CREATE INDEX employees_list ON company.employees(tenant_id,created_at DESC,id DESC);
+ALTER TABLE company.employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company.employees FORCE ROW LEVEL SECURITY;
+CREATE POLICY employees_tenant ON company.employees USING(tenant_id::text=current_setting('app.tenant_id',true)) WITH CHECK(tenant_id::text=current_setting('app.tenant_id',true));
+ALTER TABLE settings.memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings.memberships FORCE ROW LEVEL SECURITY;
+CREATE POLICY memberships_read ON settings.memberships FOR SELECT USING(tenant_id::text=current_setting('app.tenant_id',true) OR subject=current_setting('app.subject',true));
+CREATE POLICY memberships_write ON settings.memberships FOR ALL USING(tenant_id::text=current_setting('app.tenant_id',true)) WITH CHECK(tenant_id::text=current_setting('app.tenant_id',true));
+ALTER TABLE settings.tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings.tenants FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenants_read ON settings.tenants FOR SELECT USING(id::text=current_setting('app.tenant_id',true) OR owner_sub=current_setting('app.subject',true) OR EXISTS(SELECT 1 FROM settings.memberships m WHERE m.tenant_id=id AND m.subject=current_setting('app.subject',true)));
+CREATE POLICY tenants_write ON settings.tenants FOR ALL USING(id::text=current_setting('app.tenant_id',true)) WITH CHECK(id::text=current_setting('app.tenant_id',true));
+ALTER TABLE settings.invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings.invitations FORCE ROW LEVEL SECURITY;
+CREATE POLICY invitations_read ON settings.invitations FOR SELECT USING(tenant_id::text=current_setting('app.tenant_id',true) OR token_hash=current_setting('app.invitation_hash',true));
+CREATE POLICY invitations_write ON settings.invitations FOR ALL USING(tenant_id::text=current_setting('app.tenant_id',true)) WITH CHECK(tenant_id::text=current_setting('app.tenant_id',true));
+GRANT USAGE ON SCHEMA settings,company,money,sales TO core_app;
+GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA settings,company TO core_app;
+-- +goose Down
+DROP SCHEMA company CASCADE;
+DROP SCHEMA settings CASCADE;
+DROP SCHEMA money CASCADE;
+DROP SCHEMA sales CASCADE;

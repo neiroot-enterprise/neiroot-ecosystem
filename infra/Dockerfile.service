@@ -1,0 +1,14 @@
+FROM golang:1.27.1-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY internal ./internal
+COPY services ./services
+ARG SERVICE
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /service ./services/${SERVICE}
+FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
+RUN addgroup -g 10001 app && adduser -D -u 10001 -G app app
+COPY --from=build /service /service
+USER 10001:10001
+EXPOSE 8080
+ENTRYPOINT ["/service"]

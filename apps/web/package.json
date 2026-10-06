@@ -1,0 +1,6 @@
+{
+ "name":"@neiroot/web","private":true,"version":"0.1.0","type":"module","engines":{"node":">=24.14.1 <25"},
+ "scripts":{"dev":"vite --host 127.0.0.1","typecheck":"tsc --noEmit","build":"npm run typecheck && vite build","preview":"vite preview --host 127.0.0.1","generate:api":"node ../../tools/contracts/node_modules/openapi-typescript/bin/cli.js ../../docs/api/openapi.json -o src/shared/api/schema.gen.ts","test:visual":"playwright test --project=visual","test:e2e":"playwright test --project=integration"},
+ "dependencies":{"react":"19.3.0","react-dom":"19.3.0","react-router-dom":"7.18.4","@tanstack/react-query":"5.104.1","react-hook-form":"7.89.0","zod":"4.6.5","@hookform/resolvers":"5.9.1","lucide-react":"1.50.0"},
+ "devDependencies":{"typescript":"7.0.2","vite":"8.3.2","@vitejs/plugin-react":"6.1.1","@types/react":"19.3.0","@types/react-dom":"19.3.0","@types/node":"24.19.1","@playwright/test":"1.63.0"}
+}
