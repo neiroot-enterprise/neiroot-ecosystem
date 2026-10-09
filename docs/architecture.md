@@ -83,7 +83,7 @@ Gateway/BFF — логическая входная группа: reverse proxy 
 node docs/diagrams/render-architecture.cjs "ПУТЬ_К_NODE_MODULES"
 ```
 
-Требуются `@viz-js/viz` и `sharp`; в текущей среде они доступны в комплектном runtime Codex. Воспроизводимые зависимости закреплены в tools/diagrams/package-lock.json. Рендер обновляет DOT, PlantUML, SVG и PNG. Проверяет ошибки компоновки и фиксирует ширину; после изменений необходим визуальный просмотр.
+Требуются `@viz-js/viz` и `sharp`; воспроизводимые зависимости закреплены в tools/diagrams/package-lock.json. Рендер обновляет DOT, PlantUML, SVG и PNG. Проверяет ошибки компоновки и фиксирует ширину; после изменений необходим визуальный просмотр.
 
 ## PDF для просмотра
 
@@ -95,7 +95,7 @@ node docs/diagrams/render-architecture.cjs "ПУТЬ_К_NODE_MODULES"
 node docs/diagrams/export-architecture-pdf.cjs "ПУТЬ_К_NODE_MODULES"
 ```
 
-Экспорт использует Playwright из комплектного runtime и установленный Google Chrome.
+Экспорт использует закреплённый Playwright и доступный Google Chrome.
 
 ## Официальные источники
 
@@ -125,8 +125,8 @@ node docs/diagrams/export-architecture-pdf.cjs "ПУТЬ_К_NODE_MODULES"
 
 ## Пакет реализации
 
-Карта документов — [README.md](../README.md), инструкции агента — [AGENTS.md](../AGENTS.md), подтверждённые решения — [decisions.md](decisions.md). Порядок реализации определяется позже в режиме планирования; среда первой версии — локальный Docker Compose, см. [development.md](development.md).
+Карта документов — [README.md](../README.md), инструкции агента — [AGENTS.md](../AGENTS.md), подтверждённые решения — [decisions.md](decisions.md). Порядок реализации определяется позже в режиме планирования; контейнерная среда первой версии — Docker Compose, см. [development.md](development.md).
 
 ## Реализованный первый этап
 
-Traefik/web/BFF/core/Keycloak/PostgreSQL входят в локальный Compose. Redis/NATS/ClickHouse/другие сервисы на общей схеме остаются будущей архитектурой. В core schema company владеет сотрудниками, settings — tenant/членством/приглашениями/ролями; общая транзакция передаётся через порт UOW, чужие таблицы не читаются. Детали — [access-model.md](access-model.md), [mvp.md](mvp.md).
+Traefik/web/BFF/core/Keycloak/PostgreSQL входят в общий контейнерный стек. Redis/NATS/ClickHouse/другие сервисы на общей схеме остаются будущей архитектурой. В core schema company владеет сотрудниками, settings — tenant/членством/приглашениями/ролями; общая транзакция передаётся через порт UOW, чужие таблицы не читаются. Детали — [access-model.md](access-model.md), [mvp.md](mvp.md).

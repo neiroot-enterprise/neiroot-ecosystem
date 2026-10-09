@@ -9,3 +9,19 @@
 tmp
 output
 docs/design/references
+
+# Personal launch helpers retained on disk must not enter the build context.
+scripts/start-local.ps1
+scripts/setup-local.ps1
+scripts/configure-keycloak.ps1
+scripts/install-prerequisites.ps1
+scripts/install-wsl-admin.ps1
+scripts/install-test-runtime.ps1
+scripts/start-test-runtime.ps1
+scripts/stop-test-runtime.ps1
+scripts/stop-test-keycloak.ps1
+*.local.md
+compose.local.yml
+compose.local.yaml
+compose.override.yml
+compose.override.yaml

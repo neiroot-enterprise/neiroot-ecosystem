@@ -11,5 +11,24 @@ test-results/
 coverage/
 tmp/
 .DS_Store
+notes.md
 *.pem
 *.key
+
+# Machine-specific launch files. New OS-specific helpers belong under .local/.
+# Legacy Windows paths are retained on this machine, but are not published.
+/scripts/start-local.ps1
+/scripts/setup-local.ps1
+/scripts/configure-keycloak.ps1
+/scripts/install-prerequisites.ps1
+/scripts/install-wsl-admin.ps1
+/scripts/install-test-runtime.ps1
+/scripts/start-test-runtime.ps1
+/scripts/stop-test-runtime.ps1
+/scripts/stop-test-keycloak.ps1
+# Personal environment documentation outside the preferred .local/ directory.
+*.local.md
+compose.local.yml
+compose.local.yaml
+compose.override.yml
+compose.override.yaml

@@ -38,7 +38,7 @@ BFF: Authorization Code + PKCE S256, случайные state/nonce, однор�
 
 Для каждого параллельного потока входа используется своя HttpOnly/Secure cookie `__Host-neiroot-flow-{state}` на 10 минут. Открытие другой вкладки не заменяет состояние первой; callback удаляет только свою cookie и атомарно потребляет свою запись потока. Прежняя одиночная cookie принимается только при точном совпадении state для переходного обновления. Ошибочный, истёкший или повторный callback отвергается; браузер получает страницу с кнопкой повторного входа, программный запрос — стандартную JSON-ошибку.
 
-Ядро самостоятельно проверяет подписанный JWT с issuer https://localhost:8443/auth/realms/neiroot и audience core-api, затем членство и разрешение. Для новых Keycloak токенов необходим default scope basic с sub. Tenant из URL сам по себе доступа не даёт. Чужой tenant → 403; чужой employee внутри разрешённого tenant → 404.
+Ядро самостоятельно проверяет подписанный JWT с issuer из доверенной серверной конфигурации и audience core-api, затем членство и разрешение. Для новых Keycloak токенов необходим default scope basic с sub. Tenant из URL сам по себе доступа не даёт. Чужой tenant → 403; чужой employee внутри разрешённого tenant → 404.
 
 PostgreSQL: FORCE RLS, core_app без SUPERUSER/BYPASSRLS и прав DDL. app.tenant_id/app.subject/app.invitation_hash задаются set_config(..., true) только внутри транзакции; пул не наследует контекст. Членства текущего subject можно читать для переключателя; публичный lookup ограничен хешем приглашения. Записи company не видны без tenant. Модули не обращаются к чужим таблицам.
 

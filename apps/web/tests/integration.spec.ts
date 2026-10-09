@@ -1,6 +1,7 @@
 import {test,expect,type Page,type BrowserContext} from '@playwright/test';
 import {randomUUID} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {existsSync} from 'node:fs';
 import path from 'node:path';
 const base='https://localhost:8443';
 const password='NeirootSyntheticTest!42';
@@ -81,6 +82,10 @@ test('Keycloak registration on narrow screen, validation and keyboard',async({pa
 
 test('Native runtime: Keycloak outage, idempotent recovery and persistence across restart',async({browser})=>{
  test.skip(process.env.NEIROOT_NATIVE_FAULT_TEST!=='1','Only runs against the explicitly managed isolated native environment');test.setTimeout(240000);
+ test.skip(process.platform!=='win32','The optional native fault runner requires Windows-specific private helpers');
+ for(const name of ['stop-test-runtime.ps1','start-test-runtime.ps1','stop-test-keycloak.ps1']) {
+  if(!existsSync(path.resolve('../../scripts/'+name))) throw new Error('Prepare the private native fault helpers for this machine before enabling NEIROOT_NATIVE_FAULT_TEST. See AGENTS.md.');
+ }
  const context=await browser.newContext(),a=await context.newPage();const owner=person('FailureOwner'),employee=person('Recovery');let paused=false;
  const script=(name:string)=>execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('../../scripts/'+name)],{timeout:180000,stdio:'ignore',windowsHide:true});
  const restart=()=>{script('stop-test-runtime.ps1');script('start-test-runtime.ps1');paused=false};
