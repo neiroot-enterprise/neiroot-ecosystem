@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for AssignableRole.
@@ -97,6 +98,174 @@ func (e Role) Valid() bool {
 	}
 }
 
+// Defines values for ListbusinessesParamsStatus.
+const (
+	ListbusinessesParamsStatusActive   ListbusinessesParamsStatus = "active"
+	ListbusinessesParamsStatusAll      ListbusinessesParamsStatus = "all"
+	ListbusinessesParamsStatusArchived ListbusinessesParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListbusinessesParamsStatus enum.
+func (e ListbusinessesParamsStatus) Valid() bool {
+	switch e {
+	case ListbusinessesParamsStatusActive:
+		return true
+	case ListbusinessesParamsStatusAll:
+		return true
+	case ListbusinessesParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetDepartmentTreeParamsStatus.
+const (
+	GetDepartmentTreeParamsStatusActive   GetDepartmentTreeParamsStatus = "active"
+	GetDepartmentTreeParamsStatusAll      GetDepartmentTreeParamsStatus = "all"
+	GetDepartmentTreeParamsStatusArchived GetDepartmentTreeParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the GetDepartmentTreeParamsStatus enum.
+func (e GetDepartmentTreeParamsStatus) Valid() bool {
+	switch e {
+	case GetDepartmentTreeParamsStatusActive:
+		return true
+	case GetDepartmentTreeParamsStatusAll:
+		return true
+	case GetDepartmentTreeParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListDepartmentEmployeesParamsStatus.
+const (
+	ListDepartmentEmployeesParamsStatusActive   ListDepartmentEmployeesParamsStatus = "active"
+	ListDepartmentEmployeesParamsStatusAll      ListDepartmentEmployeesParamsStatus = "all"
+	ListDepartmentEmployeesParamsStatusArchived ListDepartmentEmployeesParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListDepartmentEmployeesParamsStatus enum.
+func (e ListDepartmentEmployeesParamsStatus) Valid() bool {
+	switch e {
+	case ListDepartmentEmployeesParamsStatusActive:
+		return true
+	case ListDepartmentEmployeesParamsStatusAll:
+		return true
+	case ListDepartmentEmployeesParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListBusinessEmployeesParamsStatus.
+const (
+	ListBusinessEmployeesParamsStatusActive   ListBusinessEmployeesParamsStatus = "active"
+	ListBusinessEmployeesParamsStatusAll      ListBusinessEmployeesParamsStatus = "all"
+	ListBusinessEmployeesParamsStatusArchived ListBusinessEmployeesParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListBusinessEmployeesParamsStatus enum.
+func (e ListBusinessEmployeesParamsStatus) Valid() bool {
+	switch e {
+	case ListBusinessEmployeesParamsStatusActive:
+		return true
+	case ListBusinessEmployeesParamsStatusAll:
+		return true
+	case ListBusinessEmployeesParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListBusinessOrganizationsParamsStatus.
+const (
+	ListBusinessOrganizationsParamsStatusActive   ListBusinessOrganizationsParamsStatus = "active"
+	ListBusinessOrganizationsParamsStatusAll      ListBusinessOrganizationsParamsStatus = "all"
+	ListBusinessOrganizationsParamsStatusArchived ListBusinessOrganizationsParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListBusinessOrganizationsParamsStatus enum.
+func (e ListBusinessOrganizationsParamsStatus) Valid() bool {
+	switch e {
+	case ListBusinessOrganizationsParamsStatusActive:
+		return true
+	case ListBusinessOrganizationsParamsStatusAll:
+		return true
+	case ListBusinessOrganizationsParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetEmployeeAssignmentsParamsStatus.
+const (
+	GetEmployeeAssignmentsParamsStatusActive   GetEmployeeAssignmentsParamsStatus = "active"
+	GetEmployeeAssignmentsParamsStatusAll      GetEmployeeAssignmentsParamsStatus = "all"
+	GetEmployeeAssignmentsParamsStatusArchived GetEmployeeAssignmentsParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the GetEmployeeAssignmentsParamsStatus enum.
+func (e GetEmployeeAssignmentsParamsStatus) Valid() bool {
+	switch e {
+	case GetEmployeeAssignmentsParamsStatusActive:
+		return true
+	case GetEmployeeAssignmentsParamsStatusAll:
+		return true
+	case GetEmployeeAssignmentsParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListorganizationsParamsStatus.
+const (
+	ListorganizationsParamsStatusActive   ListorganizationsParamsStatus = "active"
+	ListorganizationsParamsStatusAll      ListorganizationsParamsStatus = "all"
+	ListorganizationsParamsStatusArchived ListorganizationsParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListorganizationsParamsStatus enum.
+func (e ListorganizationsParamsStatus) Valid() bool {
+	switch e {
+	case ListorganizationsParamsStatusActive:
+		return true
+	case ListorganizationsParamsStatusAll:
+		return true
+	case ListorganizationsParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListOrganizationBusinessesParamsStatus.
+const (
+	ListOrganizationBusinessesParamsStatusActive   ListOrganizationBusinessesParamsStatus = "active"
+	ListOrganizationBusinessesParamsStatusAll      ListOrganizationBusinessesParamsStatus = "all"
+	ListOrganizationBusinessesParamsStatusArchived ListOrganizationBusinessesParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListOrganizationBusinessesParamsStatus enum.
+func (e ListOrganizationBusinessesParamsStatus) Valid() bool {
+	switch e {
+	case ListOrganizationBusinessesParamsStatusActive:
+		return true
+	case ListOrganizationBusinessesParamsStatusAll:
+		return true
+	case ListOrganizationBusinessesParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
 // APIError defines model for APIError.
 type APIError struct {
 	Code      string `json:"code"`
@@ -106,6 +275,22 @@ type APIError struct {
 
 // AssignableRole defines model for AssignableRole.
 type AssignableRole string
+
+// AssignmentList defines model for AssignmentList.
+type AssignmentList struct {
+	Items []AssignmentView `json:"items"`
+}
+
+// AssignmentView defines model for AssignmentView.
+type AssignmentView struct {
+	Archived       bool                `json:"archived"`
+	BusinessId     openapi_types.UUID  `json:"businessId"`
+	BusinessName   string              `json:"businessName"`
+	DepartmentId   *openapi_types.UUID `json:"departmentId,omitempty"`
+	DepartmentName string              `json:"departmentName"`
+	EmployeeId     openapi_types.UUID  `json:"employeeId"`
+	EmployeeName   string              `json:"employeeName"`
+}
 
 // AuthenticatedSession defines model for AuthenticatedSession.
 type AuthenticatedSession struct {
@@ -121,6 +306,38 @@ type AuthenticatedSession struct {
 
 // AuthenticatedSessionAuthenticated defines model for AuthenticatedSession.Authenticated.
 type AuthenticatedSessionAuthenticated bool
+
+// CatalogItem defines model for CatalogItem.
+type CatalogItem struct {
+	Archived          bool                `json:"archived"`
+	BusinessID        *openapi_types.UUID `json:"businessId,omitempty"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	EffectiveArchived bool                `json:"effectiveArchived"`
+	ID                openapi_types.UUID  `json:"id"`
+	INN               *string             `json:"inn,omitempty"`
+	Name              string              `json:"name"`
+	ParentID          *openapi_types.UUID `json:"parentId"`
+	Position          int                 `json:"position"`
+}
+
+// CatalogList defines model for CatalogList.
+type CatalogList struct {
+	Items  []CatalogItem `json:"items"`
+	Limit  int           `json:"limit"`
+	Offset int           `json:"offset"`
+	Total  int           `json:"total"`
+}
+
+// CatalogNameInput defines model for CatalogNameInput.
+type CatalogNameInput struct {
+	Name string `json:"name"`
+}
+
+// CreateDepartmentInput defines model for CreateDepartmentInput.
+type CreateDepartmentInput struct {
+	Name     string              `json:"name"`
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+}
 
 // CreateEmployeeInput defines model for CreateEmployeeInput.
 type CreateEmployeeInput struct {
@@ -195,9 +412,32 @@ type Me struct {
 	Tenants  []Tenant `json:"tenants"`
 }
 
+// MoveDepartmentInput defines model for MoveDepartmentInput.
+type MoveDepartmentInput struct {
+	BeforeId *openapi_types.UUID `json:"beforeId"`
+	ParentId *openapi_types.UUID `json:"parentId"`
+}
+
 // OnboardingInput defines model for OnboardingInput.
 type OnboardingInput struct {
 	Name string `json:"name"`
+}
+
+// OrganizationInput defines model for OrganizationInput.
+type OrganizationInput struct {
+	INN  string `json:"inn"`
+	Name string `json:"name"`
+}
+
+// OrganizationUpdate defines model for OrganizationUpdate.
+type OrganizationUpdate struct {
+	INN  *string `json:"inn,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+// RestoreCatalogInput defines model for RestoreCatalogInput.
+type RestoreCatalogInput struct {
+	Name *string `json:"name,omitempty"`
 }
 
 // Role defines model for Role.
@@ -230,6 +470,62 @@ type TokenInput struct {
 	Token string `json:"token"`
 }
 
+// ListbusinessesParams defines parameters for Listbusinesses.
+type ListbusinessesParams struct {
+	Status *ListbusinessesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Search *string                     `form:"search,omitempty" json:"search,omitempty"`
+	Limit  *int                        `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int                        `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListbusinessesParamsStatus defines parameters for Listbusinesses.
+type ListbusinessesParamsStatus string
+
+// CreateBusinessParams defines parameters for CreateBusiness.
+type CreateBusinessParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// GetDepartmentTreeParams defines parameters for GetDepartmentTree.
+type GetDepartmentTreeParams struct {
+	Status *GetDepartmentTreeParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// GetDepartmentTreeParamsStatus defines parameters for GetDepartmentTree.
+type GetDepartmentTreeParamsStatus string
+
+// CreateDepartmentParams defines parameters for CreateDepartment.
+type CreateDepartmentParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// ListDepartmentEmployeesParams defines parameters for ListDepartmentEmployees.
+type ListDepartmentEmployeesParams struct {
+	Status *ListDepartmentEmployeesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// ListDepartmentEmployeesParamsStatus defines parameters for ListDepartmentEmployees.
+type ListDepartmentEmployeesParamsStatus string
+
+// ListBusinessEmployeesParams defines parameters for ListBusinessEmployees.
+type ListBusinessEmployeesParams struct {
+	Status *ListBusinessEmployeesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// ListBusinessEmployeesParamsStatus defines parameters for ListBusinessEmployees.
+type ListBusinessEmployeesParamsStatus string
+
+// ListBusinessOrganizationsParams defines parameters for ListBusinessOrganizations.
+type ListBusinessOrganizationsParams struct {
+	Status *ListBusinessOrganizationsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Search *string                                `form:"search,omitempty" json:"search,omitempty"`
+	Limit  *int                                   `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int                                   `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListBusinessOrganizationsParamsStatus defines parameters for ListBusinessOrganizations.
+type ListBusinessOrganizationsParamsStatus string
+
 // ListEmployeesParams defines parameters for ListEmployees.
 type ListEmployeesParams struct {
 	Search *string `form:"search,omitempty" json:"search,omitempty"`
@@ -241,6 +537,41 @@ type ListEmployeesParams struct {
 type CreateEmployeeParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
+
+// GetEmployeeAssignmentsParams defines parameters for GetEmployeeAssignments.
+type GetEmployeeAssignmentsParams struct {
+	Status *GetEmployeeAssignmentsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// GetEmployeeAssignmentsParamsStatus defines parameters for GetEmployeeAssignments.
+type GetEmployeeAssignmentsParamsStatus string
+
+// ListorganizationsParams defines parameters for Listorganizations.
+type ListorganizationsParams struct {
+	Status *ListorganizationsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Search *string                        `form:"search,omitempty" json:"search,omitempty"`
+	Limit  *int                           `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int                           `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListorganizationsParamsStatus defines parameters for Listorganizations.
+type ListorganizationsParamsStatus string
+
+// CreateOrganizationParams defines parameters for CreateOrganization.
+type CreateOrganizationParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// ListOrganizationBusinessesParams defines parameters for ListOrganizationBusinesses.
+type ListOrganizationBusinessesParams struct {
+	Status *ListOrganizationBusinessesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Search *string                                 `form:"search,omitempty" json:"search,omitempty"`
+	Limit  *int                                    `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int                                    `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListOrganizationBusinessesParamsStatus defines parameters for ListOrganizationBusinesses.
+type ListOrganizationBusinessesParamsStatus string
 
 // AcceptInvitationJSONRequestBody defines body for AcceptInvitation for application/json ContentType.
 type AcceptInvitationJSONRequestBody = TokenInput
@@ -254,11 +585,41 @@ type OnboardJSONRequestBody = OnboardingInput
 // SelectTenantJSONRequestBody defines body for SelectTenant for application/json ContentType.
 type SelectTenantJSONRequestBody = TenantSelection
 
+// CreateBusinessJSONRequestBody defines body for CreateBusiness for application/json ContentType.
+type CreateBusinessJSONRequestBody = CatalogNameInput
+
+// UpdateBusinessJSONRequestBody defines body for UpdateBusiness for application/json ContentType.
+type UpdateBusinessJSONRequestBody = CatalogNameInput
+
+// CreateDepartmentJSONRequestBody defines body for CreateDepartment for application/json ContentType.
+type CreateDepartmentJSONRequestBody = CreateDepartmentInput
+
+// RenameDepartmentJSONRequestBody defines body for RenameDepartment for application/json ContentType.
+type RenameDepartmentJSONRequestBody = CatalogNameInput
+
+// MoveDepartmentJSONRequestBody defines body for MoveDepartment for application/json ContentType.
+type MoveDepartmentJSONRequestBody = MoveDepartmentInput
+
+// RestoreDepartmentJSONRequestBody defines body for RestoreDepartment for application/json ContentType.
+type RestoreDepartmentJSONRequestBody = RestoreCatalogInput
+
+// RestoreBusinessJSONRequestBody defines body for RestoreBusiness for application/json ContentType.
+type RestoreBusinessJSONRequestBody = RestoreCatalogInput
+
 // CreateEmployeeJSONRequestBody defines body for CreateEmployee for application/json ContentType.
 type CreateEmployeeJSONRequestBody = CreateEmployeeInput
 
 // ChangeEmployeeRoleJSONRequestBody defines body for ChangeEmployeeRole for application/json ContentType.
 type ChangeEmployeeRoleJSONRequestBody = RoleInput
+
+// CreateOrganizationJSONRequestBody defines body for CreateOrganization for application/json ContentType.
+type CreateOrganizationJSONRequestBody = OrganizationInput
+
+// UpdateOrganizationJSONRequestBody defines body for UpdateOrganization for application/json ContentType.
+type UpdateOrganizationJSONRequestBody = OrganizationUpdate
+
+// RestoreOrganizationJSONRequestBody defines body for RestoreOrganization for application/json ContentType.
+type RestoreOrganizationJSONRequestBody = RestoreCatalogInput
 
 // AsAuthenticatedSession returns the union data inside the Session as a AuthenticatedSession
 func (t Session) AsAuthenticatedSession() (AuthenticatedSession, error) {

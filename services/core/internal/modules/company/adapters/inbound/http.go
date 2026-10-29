@@ -8,9 +8,13 @@ import (
 	"net/http"
 )
 
-type HTTP struct{ Service *app.Service }
+type HTTP struct {
+	Service *app.Service
+	Catalog *app.CatalogService
+}
 
 func (h HTTP) Routes(r chi.Router) {
+	h.catalogRoutes(r)
 	r.Get("/employees", func(w http.ResponseWriter, r *http.Request) {
 		limit, offset, err := platform.Pagination(r)
 		if err != nil {

@@ -23,6 +23,8 @@
   --color-focus: #123d83;
   --color-control-border: #e2e8f0;
   --color-control-hover: #bdcbd8;
+  --color-control-error-border: #ff4d50;
+  --color-control-error-text: #d92d20;
   --color-placeholder: #b8bec6;
   --color-overlay: rgb(0 0 0 / 24%);
   --font-family: Arial, "Helvetica Neue", sans-serif;
