@@ -65,7 +65,7 @@ func (s *Service) Authorize(ctx context.Context, tenant, subject string, manage 
 		return err
 	}
 	if manage && !role.CanManage() {
-		return platform.Fail(403, "forbidden", "Создание сотрудников и изменение доступа доступны владельцу и администратору.")
+		return platform.Fail(403, "forbidden", "Изменения доступны владельцу и администратору пространства.")
 	}
 	return nil
 }

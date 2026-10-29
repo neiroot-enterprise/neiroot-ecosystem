@@ -50,7 +50,7 @@ func main() {
 	})
 	r.Get("/metrics", platform.Metrics)
 	sh := settingsHTTP.HTTP{Service: settings}
-	ch := companyHTTP.HTTP{Service: company}
+	ch := companyHTTP.HTTP{Service: company, Catalog: &companyApp.CatalogService{Repo: &companyPG.Repository{DB: db}, Tx: db, Access: settings}}
 	sh.Public(r)
 	r.Group(func(r chi.Router) {
 		r.Use(identity.Auth(platform.Env("OIDC_ISSUER"), platform.Env("OIDC_INTERNAL_ISSUER"), "core-api"))

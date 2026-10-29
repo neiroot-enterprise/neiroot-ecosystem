@@ -30,3 +30,22 @@ OAuth callback предназначен для навигации браузер
 ## Компоненты имени сотрудника
 
 Создание требует lastName и firstName (непустые строки после trim, каждая до 200 символов), принимает необязательный middleName. Суммарное отображаемое ФИО ограничено прежними 200 символами. fullName в запросе создания удалён; клиент и generated DTO обновляются вместе с OpenAPI. Employee возвращает все три компонента (пустые строки для неизвестных старых значений) и fullName для таблицы/заголовка. Idempotency-Key сравнивает каждую часть отдельно, включая отчество. Новые данные сохраняются в last_name/first_name/middle_name; единая строка не используется для восстановления компонентов. Старые ФИО сохраняются без автоматического угадывания.
+
+## Структура компании
+
+Все пути ниже относительны `/api/v1/tenants/{tenantId}`. Коллекции предприятий, организаций и их связей принимают search, limit (1–100), offset и status=active/archived/all. По умолчанию active; новые объекты первыми. Ответ CatalogList: items/total/limit/offset. Дерево отделов возвращается полностью без пагинации; status учитывает эффективную архивность.
+
+| API | Назначение |
+|---|---|
+| GET/POST /businesses, /organizations | Список и создание с Idempotency-Key |
+| GET/PATCH /businesses/{businessId}, /organizations/{organizationId} | Карточка и изменение полей |
+| POST …/archive, …/restore | Архивирование и восстановление; restore принимает `{name?}` |
+| GET/POST /businesses/{businessId}/departments | Дерево и создание `{name,parentId?}` |
+| GET/PATCH …/departments/{departmentId} | Отдел и переименование |
+| POST …/departments/{departmentId}/move | `{parentId,beforeId}`; null означает корень/конец списка; переносится вся ветвь |
+| GET …/employees; PUT/DELETE …/employees/{employeeId} | Назначения предприятия или отдела |
+| GET /employees/{employeeId}/assignments | Назначения сотрудника; status=active/archived/all |
+| GET /businesses/{businessId}/organizations, /organizations/{organizationId}/businesses | Связанные объекты |
+| PUT/DELETE …/organizations/{organizationId}, …/businesses/{businessId} | Идемпотентное добавление/снятие связи с обеих сторон |
+
+CatalogItem содержит id/name/createdAt/archived/effectiveArchived; для отдела — businessId/parentId/position, для организации — inn. archived обозначает собственное состояние, effectiveArchived учитывает архив предков либо другой стороны связи. Создание организации требует name/inn; PATCH меняет эти поля. Внутренние идентификаторы UUID. Ошибка циклов/ввода — 422, уникальности/архивного состояния — 409, прав — 403, чужой объект в доступном пространстве — 404. Записи создания запоминают отпечаток исходного запроса; повтор возвращает тот же объект, изменение запроса для занятого ключа — 409. Мутации используют существующие cookie/CSRF/BFF, бизнес-правила проверяются ядром.
