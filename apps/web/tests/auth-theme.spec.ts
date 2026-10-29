@@ -22,7 +22,7 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   await page.emulateMedia({colorScheme:'dark'});
   await page.goto(base);await expect(page.locator('#kc-login')).toBeVisible();
   await expect(page.locator('.neiroot-brand img')).toBeVisible();
-  await expect(page.locator('.neiroot-brand img')).toHaveAttribute('src',/neiroot-wordmark\.png\?v=20261005-3$/);
+  await expect(page.locator('.neiroot-brand img')).toHaveAttribute('src',/neiroot-wordmark\.png\?v=20261029-2$/);
   await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(381);
   await expect(page.getByText('Ваше рабочее пространство',{exact:true})).toHaveCount(0);
   await page.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();
@@ -37,6 +37,7 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   await page.getByRole('button',{name:'Назад',exact:true}).click();await expect(page.locator('#middle_name')).toHaveValue('Проверка');
   await page.getByRole('button',{name:'Далее',exact:true}).click();await expect(page.locator('#email')).toHaveValue(email);
   await page.getByRole('button',{name:'Зарегистрироваться',exact:true}).click();await expect(page.locator('#input-error-username')).toBeVisible();
+  await expect(page.locator('#username')).toHaveAttribute('autocomplete','tel');
   await expect(page.locator('#email')).toHaveValue(email);
   await page.locator('#username').fill(phone);await page.locator('#password').fill(password);await page.locator('#password-confirm').fill(password);
   await expect(page.locator('#username')).toHaveValue(/\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}/);
@@ -102,3 +103,34 @@ test('Stale callback shows a recovery page and keeps the JSON error contract',as
  expect((await page.request.get(base+'/api/auth/callback?state=invalid',{headers:{Accept:'application/json'}})).status()).toBe(400);
  await page.getByRole('link',{name:'Войти снова'}).click();await expect(page.locator('#kc-login')).toBeVisible();
 });
+
+for (const width of [1280,390]) {
+ test(`Login field error matches the compact reference at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.goto(base);
+  await expect(page.locator('#kc-login')).toBeVisible();
+  await expect(page.locator('#username')).toHaveAttribute('autocomplete','username');
+  expect(await page.locator('#kc-form-login').evaluate(e=>getComputedStyle(e).gap)).toBe('28px');
+  expect((await page.locator('#input-error-container-username').boundingBox())!.height).toBe(0);
+  await page.locator('#username').fill(`missing-${randomUUID()}@example.test`);
+  await page.locator('#password').fill('IncorrectSyntheticPassword!42');
+  await page.locator('#kc-login').click();
+  const error=page.locator('#input-error-username');
+  await expect(error).toContainText('Неправильное имя пользователя или пароль');
+  await expect(page.locator('.neiroot-brand img')).toBeVisible();
+  await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(381);
+  const control=page.locator('#username').locator('..');
+  const appearance=await control.evaluate(e=>({outline:getComputedStyle(e).outline,color:getComputedStyle(e).borderColor,background:getComputedStyle(e.querySelector('input')!).backgroundColor}));
+  expect(appearance.outline).toBe('rgb(255, 77, 80) solid 2px');
+  expect(appearance.color).toBe('rgb(255, 77, 80)');expect(appearance.background).toBe('rgb(255, 255, 255)');
+  const icon=await error.evaluate(e=>({width:getComputedStyle(e,'::before').width,mask:getComputedStyle(e,'::before').maskImage,gap:getComputedStyle(e).gap}));
+  expect(icon.width).toBe('16px');expect(icon.mask).toContain('data:image/svg+xml');expect(icon.gap).toBe('8px');
+  const fieldBox=(await control.boundingBox())!,errorBox=(await error.boundingBox())!;
+  expect(errorBox.y-fieldBox.y-fieldBox.height).toBe(8);
+  const nextGroup=(await page.locator('#password').locator('xpath=ancestor::div[contains(@class,"pf-v5-c-form__group")]').boundingBox())!;
+  expect(nextGroup.y-errorBox.y-errorBox.height).toBe(16);
+  await expect(page.locator('#neiroot-login-error')).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:`test-results/login-reference-error-${width}.png`,fullPage:true});
+ });
+}
