@@ -1,6 +1,7 @@
 package inbound
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -43,6 +44,12 @@ func (h HTTP) catalogRoutes(r chi.Router) {
 					return
 				}
 			}
+			if action == "updateAssignments" {
+				if err := decodeAssignments(w, r, &q); err != nil {
+					platform.WriteError(w, r, err)
+					return
+				}
+			}
 			if action == "create" || action == "update" || action == "restore" || action == "move" {
 				if err := decodeCatalog(w, r, &q); err != nil {
 					platform.WriteError(w, r, err)
@@ -62,7 +69,7 @@ func (h HTTP) catalogRoutes(r chi.Router) {
 			if action == "create" {
 				status = 201
 			}
-			if action == "assign" || action == "unassign" || action == "link" || action == "unlink" {
+			if action == "assign" || action == "unassign" || action == "link" || action == "unlink" || action == "updateAssignments" {
 				w.WriteHeader(204)
 				return
 			}
@@ -98,6 +105,7 @@ func (h HTTP) catalogRoutes(r chi.Router) {
 		r.Delete(route.path+"/employees/{employeeId:[0-9a-f-]{36}}", handler(route.kind, "unassign"))
 	}
 	r.Get("/employees/{employeeId:[0-9a-f-]{36}}/assignments", handler("businesses", "employeeAssignments"))
+	r.Patch("/employees/{employeeId:[0-9a-f-]{36}}/assignments", handler("businesses", "updateAssignments"))
 	r.Get(b+"/organizations", handler("businesses", "organizations"))
 	r.Put(b+"/organizations/{organizationId:[0-9a-f-]{36}}", handler("businesses", "link"))
 	r.Delete(b+"/organizations/{organizationId:[0-9a-f-]{36}}", handler("businesses", "unlink"))
@@ -105,6 +113,57 @@ func (h HTTP) catalogRoutes(r chi.Router) {
 	r.Get(o+"/businesses", handler("organizations", "businesses"))
 	r.Put(o+"/businesses/{businessId:[0-9a-f-]{36}}", handler("organizations", "link"))
 	r.Delete(o+"/businesses/{businessId:[0-9a-f-]{36}}", handler("organizations", "unlink"))
+}
+
+func decodeAssignments(w http.ResponseWriter, r *http.Request, q *app.CatalogCommand) error {
+	var body struct {
+		Add    []json.RawMessage `json:"add"`
+		Remove []json.RawMessage `json:"remove"`
+	}
+	if err := platform.Decode(w, r, &body); err != nil {
+		return err
+	}
+	if body.Add == nil || body.Remove == nil {
+		return platform.Fail(422, "invalid_assignments", "Укажите массивы add и remove.")
+	}
+	decode := func(rows []json.RawMessage) ([]contracts.AssignmentReference, error) {
+		result := make([]contracts.AssignmentReference, 0, len(rows))
+		for _, raw := range rows {
+			var fields map[string]json.RawMessage
+			var item contracts.AssignmentReference
+			decoder := json.NewDecoder(bytes.NewReader(raw))
+			decoder.DisallowUnknownFields()
+			if err := decoder.Decode(&item); err != nil {
+				return nil, platform.Fail(422, "invalid_assignments", "Укажите корректные businessId и departmentId.")
+			}
+			if err := json.Unmarshal(raw, &fields); err != nil || item.BusinessId == uuid.Nil || len(fields["departmentId"]) == 0 {
+				return nil, platform.Fail(422, "invalid_assignments", "Укажите businessId и departmentId; для предприятия departmentId равен null.")
+			}
+			result = append(result, item)
+		}
+		return result, nil
+	}
+	var dto contracts.UpdateEmployeeAssignmentsInput
+	var err error
+	if dto.Add, err = decode(body.Add); err != nil {
+		return err
+	}
+	if dto.Remove, err = decode(body.Remove); err != nil {
+		return err
+	}
+	convert := func(rows []contracts.AssignmentReference) []app.AssignmentTarget {
+		result := make([]app.AssignmentTarget, 0, len(rows))
+		for _, item := range rows {
+			target := app.AssignmentTarget{BusinessID: item.BusinessId.String()}
+			if item.DepartmentId != nil {
+				target.DepartmentID = item.DepartmentId.String()
+			}
+			result = append(result, target)
+		}
+		return result
+	}
+	q.Assignments = app.AssignmentChanges{Add: convert(dto.Add), Remove: convert(dto.Remove)}
+	return nil
 }
 
 // Decode the operation's generated DTO so unrelated fields cannot silently turn

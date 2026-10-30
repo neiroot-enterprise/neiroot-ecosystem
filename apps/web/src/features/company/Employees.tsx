@@ -8,7 +8,7 @@ import {Search,UserPlus,ArrowLeft,ChevronLeft,ChevronRight,Eye,EyeOff} from 'luc
 import {api,roleNames,canManage,type Tenant,type EmployeeList,type Employee,type CreateEmployeeResult} from '../../shared/api/client';
 import {Busy,ErrorMessage,InvitationLink,Modal} from '../../shared/ui/components';
 import {formatPhone,normalizePhone} from '../../shared/lib/phone';
-import {EmployeeAssignments} from './Catalog';
+import {EmployeeAssignments} from './EmployeeAssignments';
 
 export function Employees({tenant}:{tenant:Tenant}){
  const[search,setSearch]=useState('');const[query,setQuery]=useState('');const[offset,setOffset]=useState(0);const limit=25;
@@ -42,7 +42,7 @@ export function CreateEmployee({tenant,onDirty}:{tenant:Tenant;onDirty:(value:bo
  {mode==='password'&&<div className="field"><label htmlFor="password">Пароль *</label><div className="password-field"><input id="password" type={showPassword?'text':'password'} autoComplete="new-password" aria-invalid={!!errors.password} {...form.register('password')}/><button type="button" className="icon-button" aria-label={showPassword?'Скрыть пароль':'Показать пароль'} onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff size={19}/>:<Eye size={19}/>}</button></div><p className="field-help">Минимум 8 символов. Обязательной смены при первом входе нет.</p>{errors.password&&<small className="field-error">{errors.password.message}</small>}</div>}
  <ErrorMessage error={mutation.error}/><div className="form-actions"><button className="button primary" disabled={mutation.isPending} type="submit">{mutation.isPending?'Создаём…':'Создать сотрудника'}</button><Link className="button" to="/company/employees">Отмена</Link></div></form></section>
 }
-export function EmployeeCard({tenant,id}:{tenant:Tenant;id:string}){
+export function EmployeeCard({tenant,id,onDirty}:{tenant:Tenant;id:string;onDirty:(value:boolean)=>void}){
  const client=useQueryClient();const[role,setRole]=useState('user');const[url,setURL]=useState('');const[confirm,setConfirm]=useState(false);const[notice,setNotice]=useState('');
  const query=useQuery({queryKey:['employee',tenant.id,id],queryFn:()=>api<Employee>(`/api/v1/tenants/${tenant.id}/employees/${id}`)});
  useEffect(()=>{if(query.data)setRole(query.data.role)},[query.data]);
@@ -55,7 +55,7 @@ export function EmployeeCard({tenant,id}:{tenant:Tenant;id:string}){
  {canManage(tenant.role)&&employee.role!=='owner'&&<><hr/><h2>Роль в пространстве</h2><div className="inline-form"><div className="field"><label htmlFor="employee-role">Роль сотрудника</label><select id="employee-role" value={role} onChange={e=>{setRole(e.target.value);setNotice('')}}><option value="user">Пользователь</option><option value="admin">Администратор</option></select></div><button className="button primary" disabled={roleMutation.isPending||role===employee.role} onClick={()=>roleMutation.mutate()}>Сохранить роль</button></div><ErrorMessage error={roleMutation.error}/>
  {employee.accessState!=='active'&&<><hr/><h2>Приглашение</h2><p className="muted">Новая ссылка действует 7 дней. Предыдущая ссылка перестанет работать.</p><div className="form-actions"><button className="button primary" disabled={invite.isPending} onClick={()=>invite.mutate()}>{invite.isPending?'Готовим…':'Выдать новую ссылку'}</button>{employee.invitationState==='pending'&&<button className="button danger" onClick={()=>setConfirm(true)}>Отменить приглашение</button>}</div><ErrorMessage error={invite.error}/>{url&&<InvitationLink url={url}/>}</>}
  </>}{employee.role==='owner'&&<p className="field-help">Владелец пространства. Эта роль защищена от изменения.</p>}{notice&&<p className="success-note" role="status">{notice}</p>}</div>
- <EmployeeAssignments tenant={tenant} id={id}/>
+ <EmployeeAssignments tenant={tenant} id={id} onDirty={onDirty}/>
  {confirm&&<Modal title="Отменить приглашение?" onClose={()=>setConfirm(false)}><p>Сотрудник не сможет подключиться по выданной ссылке.</p><ErrorMessage error={revoke.error}/><div className="form-actions"><button className="button danger" disabled={revoke.isPending} onClick={()=>revoke.mutate()}>Отменить приглашение</button><button className="button" onClick={()=>setConfirm(false)}>Оставить</button></div></Modal>}
  </section>
 }

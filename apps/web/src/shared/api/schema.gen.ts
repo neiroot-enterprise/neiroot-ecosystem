@@ -507,7 +507,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** @description Atomically add/remove employee assignments. A null departmentId targets business membership. Department assignment implies membership; removing business membership removes all its departments, including archived. Archived objects are read-only. Conflicting changes return 422; any failure rolls back the whole batch. Repeated changes are idempotent. */
+        patch: operations["updateEmployeeAssignments"];
         trace?: never;
     };
     "/api/v1/tenants/{tenantId}/businesses/{businessId}/organizations": {
@@ -740,6 +741,16 @@ export interface components {
         };
         AssignmentList: {
             items: components["schemas"]["AssignmentView"][];
+        };
+        AssignmentReference: {
+            /** Format: uuid */
+            businessId: string;
+            /** Format: uuid */
+            departmentId: string | null;
+        };
+        UpdateEmployeeAssignmentsInput: {
+            add: components["schemas"]["AssignmentReference"][];
+            remove: components["schemas"]["AssignmentReference"][];
         };
     };
     responses: never;
@@ -4436,6 +4447,94 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AssignmentList"];
                 };
+            };
+            /** @description Request failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    updateEmployeeAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEmployeeAssignmentsInput"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Request failed */
             400: {
