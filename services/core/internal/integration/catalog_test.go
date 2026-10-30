@@ -107,6 +107,37 @@ func TestCatalogRealPostgres(t *testing.T) {
 	if len(assignments.Items) != 4 {
 		t.Fatalf("expected 2 enterprises and 2 departments, got %d", len(assignments.Items))
 	}
+	// Employee-card batches preserve unrelated membership and are repeatable.
+	batchBusiness := create("businesses", "Пакетное назначение", "", nil)
+	target := func(b, d string) app.AssignmentTarget { return app.AssignmentTarget{BusinessID: b, DepartmentID: d} }
+	batch := func(add, remove []app.AssignmentTarget) app.CatalogCommand {
+		return app.CatalogCommand{Action: "updateAssignments", Kind: "businesses", EmployeeID: employeeID, Assignments: app.AssignmentChanges{Add: add, Remove: remove}}
+	}
+	countAssignments := func(want int) {
+		t.Helper()
+		got := must(app.CatalogCommand{Action: "employeeAssignments", Kind: "businesses", EmployeeID: employeeID, Status: "all"}).(app.AssignmentList)
+		if len(got.Items) != want {
+			t.Fatalf("batch assignments: got %d, want %d", len(got.Items), want)
+		}
+	}
+	change := batch([]app.AssignmentTarget{target(b.ID, neighbor.ID), target(batchBusiness.ID, "")}, []app.AssignmentTarget{target(b.ID, leaf.ID)})
+	must(change)
+	must(change)
+	countAssignments(5)
+	must(batch([]app.AssignmentTarget{target(b.ID, leaf.ID)}, []app.AssignmentTarget{target(b.ID, neighbor.ID), target(batchBusiness.ID, "")}))
+	countAssignments(4)
+	fail(batch([]app.AssignmentTarget{target(b.ID, neighbor.ID), target(b.ID, foreign.ID)}, nil))
+	fail(batch([]app.AssignmentTarget{target(b.ID, neighbor.ID)}, []app.AssignmentTarget{target(b.ID, neighbor.ID)}))
+	fail(batch([]app.AssignmentTarget{target(b.ID, neighbor.ID)}, []app.AssignmentTarget{target(b.ID, "")}))
+	countAssignments(4)
+	// Fail on the second real SQL write to prove rollback after a partial batch.
+	failingService := &app.CatalogService{Repo: &failingAssignmentRepository{CatalogRepository: service.Repo}, Tx: db, Access: settingsService}
+	rollback := batch(nil, []app.AssignmentTarget{target(b.ID, child.ID), target(b.ID, leaf.ID)})
+	rollback.Tenant, rollback.Subject = tenant.ID, owner.Subject
+	if _, err = failingService.Execute(ctx, rollback); err == nil {
+		t.Fatal("expected injected storage failure")
+	}
+	countAssignments(4)
 	// An ordinary member can read but cannot create, rename or archive.
 	ordinary := "ordinary-" + suffix
 	if err = db.Within(ctx, tenant.ID, func(ctx context.Context) error {
@@ -116,6 +147,9 @@ func TestCatalogRealPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	must(app.CatalogCommand{Action: "list", Kind: "businesses", Subject: ordinary})
+	forbiddenBatch := batch([]app.AssignmentTarget{target(b.ID, neighbor.ID)}, nil)
+	forbiddenBatch.Subject = ordinary
+	fail(forbiddenBatch)
 	for _, action := range []string{"update", "archive", "restore"} {
 		fail(app.CatalogCommand{Action: action, Kind: "businesses", ID: b.ID, Subject: ordinary, Input: app.CatalogInput{Name: name("Forbidden")}})
 	}
@@ -138,6 +172,8 @@ func TestCatalogRealPostgres(t *testing.T) {
 	must(app.CatalogCommand{Action: "restore", Kind: "organizations", ID: organization.ID})
 	// Independently archived children stay archived after parent/business restoration.
 	must(app.CatalogCommand{Action: "archive", Kind: "departments", BusinessID: b.ID, ID: leaf.ID})
+	fail(batch(nil, []app.AssignmentTarget{target(b.ID, leaf.ID)}))
+	fail(batch([]app.AssignmentTarget{target(b.ID, leaf.ID)}, nil))
 	must(app.CatalogCommand{Action: "archive", Kind: "departments", BusinessID: b.ID, ID: child.ID})
 	fail(app.CatalogCommand{Action: "restore", Kind: "departments", BusinessID: b.ID, ID: leaf.ID})
 	duplicate := create("departments", child.Name, b.ID, nil)
@@ -147,12 +183,16 @@ func TestCatalogRealPostgres(t *testing.T) {
 		t.Fatal("independent archive lost")
 	}
 	must(app.CatalogCommand{Action: "archive", Kind: "businesses", ID: b.ID, BusinessID: b.ID})
+	fail(batch(nil, []app.AssignmentTarget{target(b.ID, "")}))
 	fail(app.CatalogCommand{Action: "assign", Kind: "departments", BusinessID: b.ID, ID: duplicate.ID, EmployeeID: employeeID})
 	create("businesses", b.Name, "", nil)
 	fail(app.CatalogCommand{Action: "restore", Kind: "businesses", ID: b.ID, BusinessID: b.ID})
 	must(app.CatalogCommand{Action: "restore", Kind: "businesses", ID: b.ID, BusinessID: b.ID, Input: app.CatalogInput{Name: name("Восстановленное предприятие")}})
 	// Removing enterprise membership also removes assignments in archived departments.
-	must(app.CatalogCommand{Action: "unassign", Kind: "businesses", ID: b.ID, BusinessID: b.ID, EmployeeID: employeeID})
+	removeBusiness := batch(nil, []app.AssignmentTarget{target(b.ID, ""), target(b.ID, leaf.ID)})
+	must(removeBusiness)
+	must(removeBusiness)
+	countAssignments(1)
 	if err = db.Within(ctx, tenant.ID, func(ctx context.Context) error {
 		var count int
 		err := db.Q(ctx).QueryRow(ctx, "SELECT count(*) FROM company.department_employees WHERE business_id=$1", b.ID).Scan(&count)
@@ -187,6 +227,13 @@ func TestCatalogRealPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	fail(app.CatalogCommand{Action: "assign", Kind: "businesses", BusinessID: b.ID, ID: b.ID, EmployeeID: otherEmployee})
+	foreignEmployeeBatch := batch([]app.AssignmentTarget{target(b.ID, "")}, nil)
+	foreignEmployeeBatch.EmployeeID = otherEmployee
+	fail(foreignEmployeeBatch)
+	fail(batch([]app.AssignmentTarget{target(foreignBusiness.(domain.CatalogItem).ID, "")}, nil))
+	if _, err = service.Execute(ctx, app.CatalogCommand{Tenant: tenant2.ID, Subject: owner.Subject, Kind: "businesses", Action: "updateAssignments", EmployeeID: otherEmployee}); err == nil {
+		t.Fatal("batch tenant access leaked")
+	}
 	// Concurrent opposing moves cannot form a cycle.
 	a := create("departments", "Concurrent A", b.ID, nil)
 	z := create("departments", "Concurrent B", b.ID, nil)
@@ -216,4 +263,17 @@ func TestCatalogRealPostgres(t *testing.T) {
 		t.Fatal("RLS leaked without tenant", err)
 	}
 	t.Log(fmt.Sprintf("catalog, archives, links, assignments, concurrency and tenant isolation passed (%s)", tenant.ID))
+}
+
+type failingAssignmentRepository struct {
+	app.CatalogRepository
+	writes int
+}
+
+func (r *failingAssignmentRepository) CatalogAssign(ctx context.Context, tenant, business, department, employee string, add bool) error {
+	r.writes++
+	if r.writes == 2 {
+		return fmt.Errorf("injected assignment storage failure")
+	}
+	return r.CatalogRepository.CatalogAssign(ctx, tenant, business, department, employee, add)
 }

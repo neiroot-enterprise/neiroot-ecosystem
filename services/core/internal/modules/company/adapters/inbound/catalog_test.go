@@ -31,3 +31,37 @@ func TestCatalogOperationBodies(t *testing.T) {
 		})
 	}
 }
+
+func TestAssignmentBatchBodies(t *testing.T) {
+	const target = `{"businessId":"10000000-0000-0000-0000-000000000001","departmentId":null}`
+	for _, tc := range []struct {
+		body  string
+		valid bool
+	}{
+		{`{"add":[],"remove":[]}`, true},
+		{`{"add":[` + target + `],"remove":[]}`, true},
+		{`{"add":[{"businessId":"10000000-0000-0000-0000-000000000001","departmentId":"10000000-0000-0000-0000-000000000002"}],"remove":[]}`, true},
+		{`{}`, false},
+		{`null`, false},
+		{`{"add":null,"remove":[]}`, false},
+		{`{"add":[],"remove":[],"extra":true}`, false},
+		{`{"add":[null],"remove":[]}`, false},
+		{`{"add":[{}],"remove":[]}`, false},
+		{`{"add":[{"businessId":"10000000-0000-0000-0000-000000000001"}],"remove":[]}`, false},
+		{`{"add":[{"businessId":"wrong","departmentId":null}],"remove":[]}`, false},
+		{`{"add":[{"businessId":"10000000-0000-0000-0000-000000000001","departmentId":"wrong"}],"remove":[]}`, false},
+		{`{"add":[{"businessId":null,"departmentId":null}],"remove":[]}`, false},
+		{`{"add":[{"businessId":"10000000-0000-0000-0000-000000000001","departmentId":null,"extra":true}],"remove":[]}`, false},
+	} {
+		t.Run(tc.body, func(t *testing.T) {
+			q := app.CatalogCommand{}
+			err := decodeAssignments(httptest.NewRecorder(), httptest.NewRequest("PATCH", "/", strings.NewReader(tc.body)), &q)
+			if (err == nil) != tc.valid {
+				t.Fatalf("valid=%v err=%v", tc.valid, err)
+			}
+			if err == nil && len(q.Assignments.Add) == 1 && q.Assignments.Add[0].BusinessID != "10000000-0000-0000-0000-000000000001" {
+				t.Fatal("assignment target was not decoded")
+			}
+		})
+	}
+}

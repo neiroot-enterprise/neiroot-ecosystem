@@ -281,6 +281,12 @@ type AssignmentList struct {
 	Items []AssignmentView `json:"items"`
 }
 
+// AssignmentReference defines model for AssignmentReference.
+type AssignmentReference struct {
+	BusinessId   openapi_types.UUID  `json:"businessId"`
+	DepartmentId *openapi_types.UUID `json:"departmentId"`
+}
+
 // AssignmentView defines model for AssignmentView.
 type AssignmentView struct {
 	Archived       bool                `json:"archived"`
@@ -470,6 +476,12 @@ type TokenInput struct {
 	Token string `json:"token"`
 }
 
+// UpdateEmployeeAssignmentsInput defines model for UpdateEmployeeAssignmentsInput.
+type UpdateEmployeeAssignmentsInput struct {
+	Add    []AssignmentReference `json:"add"`
+	Remove []AssignmentReference `json:"remove"`
+}
+
 // ListbusinessesParams defines parameters for Listbusinesses.
 type ListbusinessesParams struct {
 	Status *ListbusinessesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
@@ -608,6 +620,9 @@ type RestoreBusinessJSONRequestBody = RestoreCatalogInput
 
 // CreateEmployeeJSONRequestBody defines body for CreateEmployee for application/json ContentType.
 type CreateEmployeeJSONRequestBody = CreateEmployeeInput
+
+// UpdateEmployeeAssignmentsJSONRequestBody defines body for UpdateEmployeeAssignments for application/json ContentType.
+type UpdateEmployeeAssignmentsJSONRequestBody = UpdateEmployeeAssignmentsInput
 
 // ChangeEmployeeRoleJSONRequestBody defines body for ChangeEmployeeRole for application/json ContentType.
 type ChangeEmployeeRoleJSONRequestBody = RoleInput

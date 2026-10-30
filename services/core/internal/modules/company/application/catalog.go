@@ -37,6 +37,7 @@ type CatalogCommand struct {
 	Action, Kind, Tenant, Subject, ID, BusinessID, EmployeeID, OrganizationID, Key, Search, Status string
 	Limit, Offset                                                                                  int
 	Input                                                                                          CatalogInput
+	Assignments                                                                                    AssignmentChanges
 }
 type CatalogList struct {
 	Items  []domain.CatalogItem `json:"items"`
@@ -157,6 +158,8 @@ func (s *CatalogService) Execute(ctx context.Context, q CatalogCommand) (any, er
 			}
 		}
 		switch q.Action {
+		case "updateAssignments":
+			return s.updateAssignments(ctx, q, c)
 		case "get":
 			result = e
 			return nil

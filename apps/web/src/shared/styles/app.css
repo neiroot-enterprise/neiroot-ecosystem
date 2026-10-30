@@ -26,16 +26,59 @@ input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px white inset;-webkit-text-
 .catalog-link-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-control-border);overflow-wrap:anywhere}
 .catalog-link-list li>a,.catalog-link-list li>span{min-width:0;overflow-wrap:anywhere}
 .catalog-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.department-row{border:1px solid var(--color-control-border);border-radius:var(--radius-input);padding:8px;margin:8px 0;min-width:0}
+.department-tree-scroll{overflow-x:auto;padding:4px;margin:-4px}
+.department-tree{--department-indent:var(--space-6);min-width:calc(220px + var(--max-depth,0)*var(--department-indent))}
+.department-node{position:relative;padding:4px 0;isolation:isolate}
+.department-row{position:relative;border:1px solid var(--color-control-border);border-radius:var(--radius-input);padding:8px;margin-inline-start:calc(var(--depth)*var(--department-indent));min-width:220px;background:var(--color-surface)}
+.department-guide,.department-branch,.department-stem{position:absolute;pointer-events:none;border-color:var(--color-control-hover);z-index:-1}
+.department-guide{inset-block:0;inset-inline-start:calc((var(--guide-level) - .5)*var(--department-indent));border-inline-start:1px solid var(--color-control-hover)}
+.department-branch{inset-block:0;inset-inline-start:calc((var(--depth) - .5)*var(--department-indent));width:calc(var(--department-indent)/2)}
+.department-branch::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;border-inline-start:1px solid var(--color-control-hover)}
+.department-branch.last::before{inset-block-end:50%}
+.department-branch::after{content:"";position:absolute;inset-block-start:50%;inset-inline:0;border-block-start:1px solid var(--color-control-hover)}
+.department-stem{inset-block-start:50%;inset-block-end:0;inset-inline-start:calc((var(--depth) + .5)*var(--department-indent));border-inline-start:1px solid var(--color-control-hover)}
+.department-parent-path{padding:4px 8px 0;overflow-wrap:anywhere}
 .department-title{display:flex;align-items:center;gap:6px;overflow-wrap:anywhere;min-height:40px}
 .department-title strong{min-width:0;flex:1}
 .department-title .icon-button{flex-shrink:0}
 .drag-handle{cursor:grab;padding:8px;user-select:none}
-.department-menu summary{cursor:pointer;padding:6px;font-size:14px}
-.department-menu .catalog-actions{padding:8px}
+.department-menu-trigger{margin-left:auto;flex-shrink:0;border-radius:var(--radius-input)}
+.department-menu-trigger circle{r:1.7px;fill:currentColor;stroke:none}
+.action-menu{position:fixed;inset:auto;margin:0;padding:6px;min-width:200px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;border:1px solid var(--color-control-border);border-radius:var(--radius-input);background:var(--color-surface,#fff);color:var(--color-text);box-shadow:var(--shadow-overlay)}
+.action-menu:popover-open{display:flex;flex-direction:column;gap:2px}
+.action-menu button{display:block;width:100%;text-align:left;white-space:normal;min-height:40px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.action-menu button:hover,.action-menu button:focus-visible{background:var(--color-selected-bg);outline:2px solid var(--color-focus);outline-offset:-2px}
+.action-menu button.danger{color:var(--color-danger)}
+.action-menu button:disabled{opacity:.45;cursor:default}
 .drop-before{border-top:3px solid #418454}
 .drop-after{border-bottom:3px solid #418454}
 .drop-inside{background:var(--color-primary-soft,#E7F5EC);outline:2px solid #418454}
 .tabs a{display:inline-flex;padding:12px 16px;color:inherit;text-decoration:none}
 .catalog-panel table td:first-child{overflow-wrap:anywhere;white-space:normal}
-@media(max-width:600px){.catalog-panel{padding:12px}.catalog-link-list li{align-items:flex-start;flex-wrap:wrap}.department-row{padding-right:4px}.department-menu .catalog-actions{gap:6px}.catalog-toolbar .field{width:100%}.section-heading h1{overflow-wrap:anywhere;min-width:0}.catalog-actions{width:100%}}
+@media(max-width:600px){.catalog-panel{padding:12px}.catalog-link-list li{align-items:flex-start;flex-wrap:wrap}.department-tree{--department-indent:var(--space-4)}.department-row{padding-right:4px}.catalog-toolbar .field{width:100%}.section-heading h1{overflow-wrap:anywhere;min-width:0}.catalog-actions{width:100%}}
+
+.assignment-groups,.assignment-groups ul{list-style:none;margin:0;padding:0}
+.assignment-groups>li{padding:16px 0;border-bottom:1px solid var(--color-control-border)}
+.assignment-groups ul{padding:8px 0 0 16px}
+.assignment-groups ul li,.assignment-business{display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-wrap:anywhere}
+.assignment-groups ul li{padding:5px 0}
+.assignment-groups .field-help{margin-top:8px}
+dialog:has(.assignment-editor){width:640px;max-height:calc(100dvh - 32px);overflow:auto}
+.assignment-editor{min-width:0}
+.assignment-editor .assignment-search{margin:20px 0 12px}
+.assignment-editor input[type=search],.assignment-search input{border-radius:var(--radius-input)}
+.assignment-options{max-height:42dvh;overflow:auto;margin-top:12px;border-top:1px solid var(--color-control-border)}
+.assignment-option{padding:12px 0;border-bottom:1px solid var(--color-control-border)}
+.assignment-business-choice{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.assignment-business-choice>.button{margin-left:auto;min-height:36px;font-size:14px;padding:6px 10px}
+.assignment-check{display:flex;align-items:center;gap:10px;min-height:44px;flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer}
+.assignment-check span{min-width:0}
+.assignment-check input{flex-shrink:0;width:20px;height:20px;margin:0;accent-color:var(--color-primary);cursor:pointer}
+.assignment-check:has(input:disabled){color:var(--color-text-muted);cursor:default}
+.assignment-check input:focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
+.assignment-departments{padding:8px 0 0 20px}
+.assignment-department{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.assignment-warning{margin-top:16px;padding:12px;border:1px solid var(--color-control-border);border-radius:var(--radius-input);background:var(--color-bg);overflow-wrap:anywhere}
+.assignment-editor .pagination{gap:8px;flex-wrap:wrap}
+.assignment-editor .form-actions{margin-top:16px}
+@media(max-width:600px){dialog:has(.assignment-editor){padding:16px}.assignment-departments{padding-left:12px}.assignment-options{max-height:38dvh}}

@@ -1,9 +1,9 @@
-import {useEffect,useRef,useState,type DragEvent} from 'react';
+import {useEffect,useRef,useState,type CSSProperties,type DragEvent} from 'react';
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {api,canManage,type Tenant,type EmployeeList} from '../../shared/api/client';
 import type {components} from '../../shared/api/schema.gen';
-import {Busy,ErrorMessage,Modal} from '../../shared/ui/components';
+import {Busy,ErrorMessage,Modal,ActionsMenu} from '../../shared/ui/components';
 
 type Item=components['schemas']['CatalogItem'];
 type ItemList=components['schemas']['CatalogList'];
@@ -72,18 +72,37 @@ function BusinessSelector({tenant,value,onSelect}:{tenant:Tenant;value:string;on
  return <details className="panel catalog-panel"><summary>Выбрать предприятие{value?' · Выбрано':''}</summary><div className="catalog-toolbar"><label className="field">Поиск предприятий<input value={search} onChange={e=>{setSearch(e.target.value);setOffset(0)}}/></label></div><QueryError error={query.error} retry={()=>void query.refetch()}/>{query.isPending?<Busy/>:query.data&&<><div className="catalog-options">{query.data.items.map(b=><button key={b.id} className="button" onClick={e=>{onSelect(b);e.currentTarget.closest('details')?.removeAttribute('open')}}>{b.name}{b.archived?' (архив)':''}</button>)}</div><Pages total={query.data.total} offset={offset} onChange={setOffset}/></>}</details>;
 }
 
+function departmentRows(all:Item[],status:string,collapsed:Set<string>){
+ const byId=new Map(all.map(d=>[d.id,d])),children=new Map<string|null,Item[]>();
+ for(const item of all){const parent=item.parentId||null,list=children.get(parent)||[];list.push(item);children.set(parent,list)}
+ for(const list of children.values())list.sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id));
+ const visible=new Set(all.filter(d=>status==='all'||d.effectiveArchived===(status==='archived')).map(d=>d.id));
+ type Row={item:Item;depth:number;parentId:string|null;hiddenParentPath:string;last:boolean;guides:number[];hasChildren:boolean};
+ const rows:Row[]=[],rendered=new Map<string,Row>(),stack=[...(children.get(null)||[])].reverse();
+ // Keep traversal iterative, including when a filter hides intermediate parents.
+ while(stack.length){
+  const item=stack.pop()!;
+  if(visible.has(item.id)){
+   const parent=item.parentId?rendered.get(item.parentId):undefined;
+   const names:string[]=[],seen=new Set<string>();let parentId=item.parentId;
+   if(parentId&&!visible.has(parentId))while(parentId&&!seen.has(parentId)){seen.add(parentId);const p=byId.get(parentId);if(!p)break;names.unshift(p.name);parentId=p.parentId}
+   const row:Row={item,depth:parent?parent.depth+1:0,parentId:parent?.item.id||null,hiddenParentPath:names.join(' / '),last:true,guides:[],hasChildren:false};
+   rows.push(row);rendered.set(item.id,row);if(parent)parent.hasChildren=true;
+  }
+  if(!visible.has(item.id)||!collapsed.has(item.id))for(const child of [...(children.get(item.id)||[])].reverse())stack.push(child);
+ }
+ const lastChild=new Map<string|null,Row>();for(const row of rows){const previous=lastChild.get(row.parentId);if(previous)previous.last=false;lastChild.set(row.parentId,row)}
+ for(const row of rows){let parent=row.parentId?rendered.get(row.parentId):undefined;while(parent){if(parent.depth>0&&!parent.last)row.guides.push(parent.depth);parent=parent.parentId?rendered.get(parent.parentId):undefined}}
+ return {rows,ordered:(parent:string|null)=>children.get(parent)||[]};
+}
+
 function DepartmentTree({tenant,business,onDirty}:{tenant:Tenant;business:Item;onDirty:Dirty}){
  const[status,setStatus]=useState(business.archived?'all':'active'),[collapsed,setCollapsed]=useState<Set<string>>(new Set()),[dragging,setDragging]=useState(''),[drop,setDrop]=useState<{id:string;zone:string}>(),[notice,setNotice]=useState('');
  const[dialog,setDialog]=useState<{type:'create'|'rename'|'restore'|'archive'|'move'|'employees';item?:Item;parentId?:string}>();
  const query=useData<ItemList>(tenant,`/businesses/${business.id}/departments?status=all`),action=useAction(tenant);
  useEffect(()=>{setStatus(business.archived?'all':'active')},[business.archived]);
  const all=query.data?.items||[],byId=new Map(all.map(d=>[d.id,d])),manage=canManage(tenant.role)&&!business.archived;
- const ordered=(parent:string|null)=>all.filter(d=>d.parentId===parent).sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id));
- const visible=all.filter(d=>status==='all'||d.effectiveArchived===(status==='archived'));
- const visibleIds=new Set(visible.map(d=>d.id));
- // Iterative traversal keeps arbitrarily deep trees independent from the JS call stack.
- const rows:{item:Item;depth:number}[]=[],stack=ordered(null).reverse().map(item=>({item,depth:0}));
- while(stack.length){const row=stack.pop()!;if(visibleIds.has(row.item.id))rows.push(row);if(!collapsed.has(row.item.id)){for(const child of ordered(row.item.id).reverse())stack.push({item:child,depth:row.depth+(visibleIds.has(row.item.id)?1:0)})}}
+ const {rows,ordered}=departmentRows(all,status,collapsed);
  const siblings=(d:Item)=>ordered(d.parentId||null).filter(x=>!x.effectiveArchived);
  const move=async(d:Item,parentId:string|null,beforeId:string|null)=>{await action.mutateAsync({path:`/businesses/${business.id}/departments/${d.id}/move`,data:{parentId,beforeId}});setNotice(`Отдел «${d.name}» перемещён`)};
  const attempt=(work:()=>Promise<unknown>)=>{void work().catch(()=>{/* Mutation error remains visible until the next attempt. */})};
@@ -95,12 +114,27 @@ function DepartmentTree({tenant,business,onDirty}:{tenant:Tenant;business:Item;o
  };
  return <div className="panel catalog-panel"><div className="catalog-toolbar"><h2>Отделы {business.name}</h2><ArchiveFilter value={status} onChange={setStatus}/>{manage&&<button className="button primary" onClick={()=>setDialog({type:'create'})}>Добавить отдел</button>}</div><p className="field-help">Перетащите за маркер ↕: верх строки — перед отделом, середина — внутрь, низ — после. Те же действия доступны в меню.</p>
  <QueryError error={query.error} retry={()=>void query.refetch()}/><ErrorMessage error={action.error}/>{notice&&<p role="status" className="success-note">{notice}</p>}
- {query.isPending?<Busy/>:!rows.length?<p className="empty">{status==='archived'?'В архиве нет отделов':'Отделов пока нет'}</p>:<ul className="department-tree" aria-label="Иерархия отделов">{rows.map(({item:d,depth})=>{
+ {query.isPending?<Busy/>:!rows.length?<p className="empty">{status==='archived'?'В архиве нет отделов':'Отделов пока нет'}</p>:<div className="department-tree-scroll" role="region" aria-label="Дерево отделов" tabIndex={0}><ul className="department-tree" aria-label="Иерархия отделов" style={{'--max-depth':rows.reduce((max,row)=>Math.max(max,row.depth),0)} as CSSProperties}>{rows.map(({item:d,depth,last,guides,hasChildren,hiddenParentPath})=>{
  const active=manage&&!d.effectiveArchived,peers=siblings(d),index=peers.findIndex(x=>x.id===d.id),parent=d.parentId?byId.get(d.parentId):undefined;
- return <li key={d.id} className={`department-row ${drop?.id===d.id?'drop-'+drop.zone:''}`} style={{paddingLeft:`${Math.min(depth,12)*18+8}px`}} onDragOver={event=>{if(active){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect(),f=(event.clientY-rect.top)/rect.height;setDrop({id:d.id,zone:f<.25?'before':f>.75?'after':'inside'})}}} onDrop={event=>{if(active)dropAt(event,d)}}>
- <div className="department-title"><button className="icon-button" aria-label={`${collapsed.has(d.id)?'Развернуть':'Свернуть'} ${d.name}`} aria-expanded={!collapsed.has(d.id)} disabled={!ordered(d.id).length} onClick={()=>setCollapsed(old=>{const next=new Set(old);next.has(d.id)?next.delete(d.id):next.add(d.id);return next})}>{collapsed.has(d.id)?'▸':'▾'}</button>{active&&<span className="drag-handle" title="Перетащить отдел" draggable onDragStart={event=>{setDragging(d.id);event.dataTransfer.setData('text/plain',d.id);event.dataTransfer.effectAllowed='move'}} onDragEnd={()=>{setDragging('');setDrop(undefined)}} aria-hidden="true">↕</span>}<strong>{d.name}</strong>{d.effectiveArchived&&<span className="status pending">Архив</span>}</div>
- <details className="department-menu"><summary aria-label={`Действия отдела ${d.name}`}>Действия</summary><div className="catalog-actions"><button className="button" onClick={()=>setDialog({type:'employees',item:d})}>Сотрудники</button>{active&&<><button className="button" onClick={()=>setDialog({type:'create',parentId:d.id})}>Добавить подотдел</button><button className="button" onClick={()=>setDialog({type:'rename',item:d})}>Переименовать</button><button className="button" disabled={action.isPending||index<=0} onClick={()=>attempt(()=>move(d,d.parentId||null,peers[index-1].id))}>Выше</button><button className="button" disabled={action.isPending||index<0||index===peers.length-1} onClick={()=>attempt(()=>move(d,d.parentId||null,peers[index+2]?.id||null))}>Ниже</button><button className="button" disabled={action.isPending||!parent} onClick={()=>{if(parent){const upper=siblings(parent),i=upper.findIndex(x=>x.id===parent.id);attempt(()=>move(d,parent.parentId||null,upper[i+1]?.id||null))}}}>На уровень выше</button><button className="button" onClick={()=>setDialog({type:'move',item:d})}>Переместить…</button><button className="button danger" onClick={()=>setDialog({type:'archive',item:d})}>В архив</button></>}{manage&&d.archived&&!business.archived&&(!parent||!parent.effectiveArchived)&&<button className="button primary" onClick={()=>setDialog({type:'restore',item:d})}>Восстановить</button>}</div></details></li>;
- })}</ul>}
+ return <li key={d.id} className="department-node" style={{'--depth':depth} as CSSProperties}>
+ {guides.map(level=><span key={level} className="department-guide" aria-hidden="true" style={{'--guide-level':level} as CSSProperties}/>)}
+ {depth>0&&<span className={`department-branch${last?' last':''}`} aria-hidden="true"/>}{hasChildren&&<span className="department-stem" aria-hidden="true"/>}
+ <div className={`department-row ${drop?.id===d.id?'drop-'+drop.zone:''}`} onDragOver={event=>{if(active){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect(),f=(event.clientY-rect.top)/rect.height;setDrop({id:d.id,zone:f<.25?'before':f>.75?'after':'inside'})}}} onDrop={event=>{if(active)dropAt(event,d)}}>
+ <div className="department-title"><button className="icon-button" aria-label={`${collapsed.has(d.id)?'Развернуть':'Свернуть'} ${d.name}`} aria-expanded={!collapsed.has(d.id)} disabled={!ordered(d.id).length} onClick={()=>setCollapsed(old=>{const next=new Set(old);next.has(d.id)?next.delete(d.id):next.add(d.id);return next})}>{collapsed.has(d.id)?'▸':'▾'}</button>{active&&<span className="drag-handle" title="Перетащить отдел" draggable onDragStart={event=>{setDragging(d.id);event.dataTransfer.setData('text/plain',d.id);event.dataTransfer.effectAllowed='move'}} onDragEnd={()=>{setDragging('');setDrop(undefined)}} aria-hidden="true">↕</span>}<strong>{d.name}</strong>{d.effectiveArchived&&<span className="status pending">Архив</span>}
+ <ActionsMenu label={`Действия отдела ${d.name}`} actions={[
+ {label:'Сотрудники',onSelect:()=>setDialog({type:'employees',item:d})},
+ ...(active?[
+ {label:'Добавить подотдел',onSelect:()=>setDialog({type:'create',parentId:d.id})},
+ {label:'Переименовать',onSelect:()=>setDialog({type:'rename',item:d})},
+ {label:'Выше',disabled:action.isPending||index<=0,onSelect:()=>attempt(()=>move(d,d.parentId||null,peers[index-1].id))},
+ {label:'Ниже',disabled:action.isPending||index<0||index===peers.length-1,onSelect:()=>attempt(()=>move(d,d.parentId||null,peers[index+2]?.id||null))},
+ {label:'На уровень выше',disabled:action.isPending||!parent,onSelect:()=>{if(parent){const upper=siblings(parent),i=upper.findIndex(x=>x.id===parent.id);attempt(()=>move(d,parent.parentId||null,upper[i+1]?.id||null))}}},
+ {label:'Переместить…',onSelect:()=>setDialog({type:'move',item:d})},
+ {label:'В архив',danger:true,onSelect:()=>setDialog({type:'archive',item:d})}
+ ]:[]),
+ ...(manage&&d.archived&&!business.archived&&(!parent||!parent.effectiveArchived)?[{label:'Восстановить',onSelect:()=>setDialog({type:'restore',item:d})}]:[])
+ ]}/></div>{hiddenParentPath&&<p className="field-help department-parent-path">В составе: {hiddenParentPath}</p>}</div></li>;
+ })}</ul></div>}
  {dialog&&['create','rename','restore'].includes(dialog.type)&&<NameDialog title={dialog.type==='create'?'Добавить отдел':dialog.type==='restore'?'Восстановить отдел: проверьте наименование':'Переименовать отдел'} initial={dialog.item} onDirty={onDirty} onClose={()=>setDialog(undefined)} onSave={async(data,key)=>{const type=dialog.type;await action.mutateAsync({path:`/businesses/${business.id}/departments${type==='create'?'':`/${dialog.item!.id}${type==='restore'?'/restore':''}`}`,method:type==='rename'?'PATCH':'POST',data:{...data,...(type==='create'?{parentId:dialog.parentId||null}:{})},key:type==='create'?key:undefined});setDialog(undefined)}}/>}
  {dialog?.type==='archive'&&<ArchiveDialog name={dialog.item!.name} onClose={()=>setDialog(undefined)} onSave={async()=>{await action.mutateAsync({path:`/businesses/${business.id}/departments/${dialog.item!.id}/archive`});setDialog(undefined)}}/>}
  {dialog?.type==='move'&&<MoveDialog item={dialog.item!} all={all} onClose={()=>setDialog(undefined)} onSave={async parent=>{await move(dialog.item!,parent,null);setDialog(undefined)}}/>}
@@ -137,8 +171,4 @@ function RelationPanel({tenant,item,kind}:{tenant:Tenant;item:Item;kind:Kind}){
 function ItemPicker({tenant,kind,onSelect,onClose}:{tenant:Tenant;kind:Kind;onSelect:(id:string)=>Promise<void>;onClose:()=>void}){
  const[search,setSearch]=useState(''),[offset,setOffset]=useState(0),[error,setError]=useState<unknown>(),[saving,setSaving]=useState(false);const query=useData<ItemList>(tenant,`/${kind}?status=active&limit=25&offset=${offset}&search=${encodeURIComponent(search)}`);
  return <Modal title={`Выбрать: ${title(kind)}`} onClose={()=>{if(!saving)onClose()}}><label className="field">Поиск<input autoFocus value={search} onChange={e=>{setSearch(e.target.value);setOffset(0)}}/></label><QueryError error={query.error} retry={()=>void query.refetch()}/><ErrorMessage error={error}/>{query.isPending?<Busy/>:query.data&&<><ul className="catalog-link-list">{query.data.items.map(item=><li key={item.id}><span>{item.name}{item.inn?` · ${item.inn}`:''}</span><button className="button" disabled={saving} onClick={async()=>{setSaving(true);try{await onSelect(item.id)}catch(err){setError(err)}finally{setSaving(false)}}}>Выбрать</button></li>)}</ul>{!query.data.items.length&&<p>Ничего не найдено.</p>}<Pages total={query.data.total} offset={offset} onChange={setOffset}/></>}</Modal>;
-}
-export function EmployeeAssignments({tenant,id}:{tenant:Tenant;id:string}){
- const query=useData<Assignments>(tenant,`/employees/${id}/assignments?status=all`);
- return <div className="panel catalog-panel"><h2>Предприятия и отделы</h2><QueryError error={query.error} retry={()=>void query.refetch()}/>{query.isPending?<Busy/>:query.data?.items.length?<ul className="catalog-link-list">{query.data.items.map(a=><li key={a.businessId+':'+a.departmentId}><Link to={`/company/businesses/${a.businessId}`}>{a.businessName}{a.departmentName?` / ${a.departmentName}`:' · Без привязки к отделу'}</Link>{a.archived&&<span className="status pending">Архив</span>}</li>)}</ul>:<p className="empty">Назначений пока нет</p>}</div>;
 }
