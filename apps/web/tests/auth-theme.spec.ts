@@ -24,7 +24,7 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   await expect(page.locator('.neiroot-brand img')).toBeVisible();
   await expect(page.locator('.neiroot-brand img')).toHaveAttribute('src',/neiroot-wordmark\.png\?v=20261029-2$/);
   await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(381);
-  await expect(page.getByText('Ваше рабочее пространство',{exact:true})).toHaveCount(0);
+  await expect(page.getByText('Ваше рабочее экосистему',{exact:true})).toHaveCount(0);
   await page.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();
   await expect(page.locator('#lastName')).toBeVisible();await expect(page.locator('#username')).toBeHidden();
   await page.getByRole('button',{name:'Далее',exact:true}).click();await expect(page.locator('#lastName')).toBeFocused();
@@ -43,7 +43,7 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   await expect(page.locator('#username')).toHaveValue(/\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}/);
   await page.screenshot({path:'test-results/registration-step2-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'Зарегистрироваться',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Создайте пространство'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Создайте экосистему'})).toBeVisible();
   const session=await (await page.request.get(base+'/api/v1/session')).json();expect(session.fullName).toBe('Тестовая Регистрация Проверка');expect(session.tenants).toHaveLength(0);
   await logout(page);
   for(const username of [phone,email]) {
@@ -52,14 +52,14 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
    try {
     await parallel.goto(base);await expect(parallel.locator('#kc-login')).toBeVisible();
     await page.locator('#username').fill(username);await page.locator('#password').fill(password);await page.locator('#kc-login').click();
-    await expect(page.getByRole('heading',{name:'Создайте пространство'})).toBeVisible();await logout(page);
+    await expect(page.getByRole('heading',{name:'Создайте экосистему'})).toBeVisible();await logout(page);
    } finally {await parallel.close()}
   }
   // Accounts provisioned with the existing single-name contract must still sign in.
   const created=await fetch(base+'/auth/admin/realms/neiroot/users',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({username:phone+'1',email:existingEmail,enabled:true,attributes:{full_name:['Тестовый Сотрудник']},credentials:[{type:'password',value:password,temporary:false}]})});
   expect(created.status).toBe(201);
   await page.goto(base);await page.locator('#username').fill(existingEmail);await page.locator('#password').fill(password);await page.locator('#kc-login').click();
-  await expect(page.getByRole('heading',{name:'Создайте пространство'})).toBeVisible();await logout(page);
+  await expect(page.getByRole('heading',{name:'Создайте экосистему'})).toBeVisible();await logout(page);
  } finally {
   const headers={Authorization:`Bearer ${token}`};
   for(const cleanupEmail of [email,existingEmail]) {

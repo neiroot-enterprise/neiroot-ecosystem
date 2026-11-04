@@ -65,7 +65,7 @@ func (s *Service) Authorize(ctx context.Context, tenant, subject string, manage 
 		return err
 	}
 	if manage && !role.CanManage() {
-		return platform.Fail(403, "forbidden", "Изменения доступны владельцу и администратору пространства.")
+		return platform.Fail(403, "forbidden", "Изменения доступны владельцу и администратору экосистемы.")
 	}
 	return nil
 }
@@ -96,7 +96,7 @@ func (s *Service) Onboard(ctx context.Context, p security.Principal, name string
 	name = strings.TrimSpace(name)
 	var tenant domain.Tenant
 	if name == "" || len([]rune(name)) > 120 {
-		return tenant, platform.Fail(422, "invalid_tenant_name", "Название пространства должно содержать от 1 до 120 символов.")
+		return tenant, platform.Fail(422, "invalid_tenant_name", "Название экосистемы должно содержать от 1 до 120 символов.")
 	}
 	id := platform.UUID()
 	ctx = s.Tx.ForSubject(ctx, p.Subject)
@@ -148,7 +148,7 @@ func (s *Service) Issue(ctx context.Context, tenant, employee string) (string, e
 		return "", platform.Fail(404, "employee_not_found", "Сотрудник не найден.")
 	}
 	if grant.Subject != "" {
-		return "", platform.Fail(409, "already_active", "Сотрудник уже подключён к пространству.")
+		return "", platform.Fail(409, "already_active", "Сотрудник уже подключён к экосистеме.")
 	}
 	token := platform.Random()
 	inv := Invitation{ID: platform.UUID(), TenantID: tenant, EmployeeID: employee, Email: grant.Email, Hash: hash(token), ExpiresAt: s.clock().Add(7 * 24 * time.Hour)}

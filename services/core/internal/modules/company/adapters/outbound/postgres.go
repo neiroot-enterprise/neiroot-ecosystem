@@ -69,7 +69,7 @@ func (r *Repository) Link(ctx context.Context, t, id, sub, state string) error {
 	// A failed concurrent retry must not disconnect an account activated by another request.
 	_, err := r.DB.Q(ctx).Exec(ctx, "UPDATE company.employees SET subject=nullif($3,''),access_state=$4 WHERE tenant_id=$1 AND id=$2 AND ($4<>'error' OR subject IS NULL)", t, id, sub, state)
 	if storage.Conflict(err) {
-		return platform.Fail(409, "account_already_linked", "Этот аккаунт уже связан с другим сотрудником пространства.")
+		return platform.Fail(409, "account_already_linked", "Этот аккаунт уже связан с другим сотрудником экосистемы.")
 	}
 	return err
 }

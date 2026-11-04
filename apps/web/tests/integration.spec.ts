@@ -28,7 +28,7 @@ test('Real Keycloak + PostgreSQL: registration, credentials, invitations, roles 
  const page=async()=>{const c=await browser.newContext();contexts.push(c);return c.newPage()};
  try{
  const owner=person('OwnerA'),other=person('OwnerB'),invited=person('Invited'),direct=person('Direct');
- const a=await page();await signup(a,owner);await a.getByLabel('Название пространства').fill('Тест A');await a.getByRole('button',{name:'Создать пространство',exact:true}).click();await expect(a.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();
+ const a=await page();await signup(a,owner);await a.getByLabel('Название экосистемы').fill('Тест A');await a.getByRole('button',{name:'Создать экосистему',exact:true}).click();await expect(a.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();
  const sa=await session(a),ta=sa.activeTenantId;expect(sa.tenants[0].role).toBe('owner');expect(sa.phone).toBe(owner.phone);expect(sa.fullName).toBe(owner.fullName);
  const repeat=await api(a,'/api/v1/onboarding','POST',{name:'Повтор'});expect((await repeat.json()).id).toBe(ta);
  const cookies=await a.context().cookies();const sid=cookies.find(c=>c.name==='__Host-neiroot')!;expect(sid.httpOnly&&sid.secure).toBe(true);expect(sid.value).toMatch(/^[a-f0-9]{64}$/);
@@ -51,14 +51,14 @@ test('Real Keycloak + PostgreSQL: registration, credentials, invitations, roles 
  const created=await inviteEmployee(a,ta,invited);expect((await api(a,'/api/v1/invitations/accept','POST',{token:token(created.invitationUrl)})).status()).toBe(403);const i=await page();await signup(i,invited,created.invitationUrl);await i.getByRole('button',{name:'Принять приглашение',exact:true}).click();await expect(i.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();expect((await session(i)).tenants).toHaveLength(1);
  expect((await api(i,'/api/v1/invitations/accept','POST',{token:token(created.invitationUrl)})).status()).toBe(200);
  // An existing owner joins a second tenant by invitation without global credential changes.
- const b=await page();await signup(b,other);await b.getByLabel('Название пространства').fill('Тест B');await b.getByRole('button',{name:'Создать пространство',exact:true}).click();await expect(b.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();const tb=(await session(b)).activeTenantId;
+ const b=await page();await signup(b,other);await b.getByLabel('Название экосистемы').fill('Тест B');await b.getByRole('button',{name:'Создать экосистему',exact:true}).click();await expect(b.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();const tb=(await session(b)).activeTenantId;
  expect((await api(a,`/api/v1/tenants/${ta}/employees`,'POST',{...other,mode:'password',role:'user',password:'DifferentSynthetic!42'},randomUUID())).status()).toBe(409);
  // The rejected provision left a recoverable card: reissue a link for that card.
  const pending=(await (await api(a,`/api/v1/tenants/${ta}/employees?search=${encodeURIComponent(other.email)}`)).json()).items[0];
  const existingLink=(await (await api(a,`/api/v1/tenants/${ta}/employees/${pending.id}/invitation`,'POST')).json()).invitationUrl;
  await b.goto(existingLink);await b.getByRole('button',{name:'Принять приглашение',exact:true}).click();await expect(b.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();expect((await session(b)).tenants).toHaveLength(2);
- await b.getByLabel('Рабочее пространство',{exact:true}).selectOption(ta);await expect(b.getByText('Команда пространства «Тест A»')).toBeVisible();await expect(b.locator('a.employee-name').filter({hasText:direct.fullName})).toBeVisible();
- await b.getByLabel('Рабочее пространство',{exact:true}).selectOption(tb);await expect(b.getByText('Команда пространства «Тест B»')).toBeVisible();await expect(b.locator('a.employee-name').filter({hasText:direct.fullName})).toHaveCount(0);
+ await b.getByLabel('Экосистема',{exact:true}).selectOption(ta);await expect(b.getByText('Команда экосистемы «Тест A»')).toBeVisible();await expect(b.locator('a.employee-name').filter({hasText:direct.fullName})).toBeVisible();
+ await b.getByLabel('Экосистема',{exact:true}).selectOption(tb);await expect(b.getByText('Команда экосистемы «Тест B»')).toBeVisible();await expect(b.locator('a.employee-name').filter({hasText:direct.fullName})).toHaveCount(0);
  expect((await api(a,`/api/v1/tenants/${tb}/employees`)).status()).toBe(403);expect((await api(b,`/api/v1/tenants/${tb}/employees/${directID}`)).status()).toBe(404);
  const ownerCard=(await (await api(a,`/api/v1/tenants/${ta}/employees?search=${encodeURIComponent(owner.email)}`)).json()).items[0];expect((await api(a,`/api/v1/tenants/${ta}/employees/${ownerCard.id}/role`,'PATCH',{role:'user'})).status()).toBe(403);
  await a.goto(base+`/company/employees/${directID}`);await a.getByLabel('Роль сотрудника',{exact:true}).selectOption('admin');await a.getByRole('button',{name:'Сохранить роль',exact:true}).click();await expect(a.getByRole('status')).toContainText('Роль сохранена');
@@ -90,7 +90,7 @@ test('Native runtime: Keycloak outage, idempotent recovery and persistence acros
  const script=(name:string)=>execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('../../scripts/'+name)],{timeout:180000,stdio:'ignore',windowsHide:true});
  const restart=()=>{script('stop-test-runtime.ps1');script('start-test-runtime.ps1');paused=false};
  try{
- await signup(a,owner);await a.getByLabel('Название пространства').fill('Тест сбоя');await a.getByRole('button',{name:'Создать пространство',exact:true}).click();await expect(a.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();const t=(await session(a)).activeTenantId,key=randomUUID(),body={lastName:employee.lastName,firstName:employee.firstName,middleName:employee.middleName,phone:employee.phone,email:employee.email,mode:'password',role:'user',password};
+ await signup(a,owner);await a.getByLabel('Название экосистемы').fill('Тест сбоя');await a.getByRole('button',{name:'Создать экосистему',exact:true}).click();await expect(a.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();const t=(await session(a)).activeTenantId,key=randomUUID(),body={lastName:employee.lastName,firstName:employee.firstName,middleName:employee.middleName,phone:employee.phone,email:employee.email,mode:'password',role:'user',password};
  script('stop-test-keycloak.ps1');paused=true;
  const failed=await api(a,`/api/v1/tenants/${t}/employees`,'POST',body,key);expect(failed.status()).toBe(503);expect((await failed.json()).code).toBe('identity_unavailable');
  const pending=(await (await api(a,`/api/v1/tenants/${t}/employees?search=${encodeURIComponent(employee.email)}`)).json()).items;expect(pending).toHaveLength(1);expect(pending[0].accessState).toBe('error');

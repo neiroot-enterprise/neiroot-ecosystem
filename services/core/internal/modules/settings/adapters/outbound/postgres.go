@@ -53,7 +53,7 @@ func (r *Repository) Role(ctx context.Context, t, sub string) (domain.Role, erro
 	var role domain.Role
 	err := r.DB.Q(ctx).QueryRow(ctx, "SELECT role FROM settings.memberships WHERE tenant_id=$1 AND subject=$2", t, sub).Scan(&role)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return role, platform.Fail(403, "tenant_forbidden", "Нет доступа к этому пространству.")
+		return role, platform.Fail(403, "tenant_forbidden", "Нет доступа к этой экосистеме.")
 	}
 	return role, err
 }
@@ -83,7 +83,7 @@ func (r *Repository) Grants(ctx context.Context, t string, ids []string) (map[st
 func (r *Repository) Activate(ctx context.Context, t, e, sub string) error {
 	tag, err := r.DB.Q(ctx).Exec(ctx, "UPDATE settings.memberships SET subject=$3 WHERE tenant_id=$1 AND employee_id=$2 AND (subject IS NULL OR subject=$3)", t, e, sub)
 	if storage.Conflict(err) {
-		return platform.Fail(409, "account_already_linked", "Аккаунт уже подключён к этому пространству.")
+		return platform.Fail(409, "account_already_linked", "Аккаунт уже подключён к этой экосистеме.")
 	}
 	if err == nil && tag.RowsAffected() != 1 {
 		return platform.Fail(409, "already_active", "Карточка уже связана с другим аккаунтом.")

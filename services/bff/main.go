@@ -280,7 +280,7 @@ func (s *server) selectTenant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if status != 200 {
-		platform.WriteError(w, r, platform.Fail(403, "tenant_forbidden", "Нет доступа к пространству."))
+		platform.WriteError(w, r, platform.Fail(403, "tenant_forbidden", "Нет доступа к экосистеме."))
 		return
 	}
 	var items []contracts.Tenant
@@ -299,7 +299,7 @@ func (s *server) selectTenant(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	platform.WriteError(w, r, platform.Fail(403, "tenant_forbidden", "Нет доступа к пространству."))
+	platform.WriteError(w, r, platform.Fail(403, "tenant_forbidden", "Нет доступа к экосистеме."))
 }
 func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 	v := r.Context().Value(sessionKey{}).(*session)

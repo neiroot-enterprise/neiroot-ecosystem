@@ -1,5 +1,5 @@
 import {test,expect,type Page} from '@playwright/test';
-const tenant={id:'11111111-1111-4111-8111-111111111111',name:'Тестовое пространство',role:'owner'};
+const tenant={id:'11111111-1111-4111-8111-111111111111',name:'Тестовая экосистема',role:'owner'};
 const employee={id:'22222222-2222-4222-8222-222222222222',fullName:'Тестовый Сотрудник',lastName:'Тестовый',firstName:'Сотрудник',middleName:'',phone:'+79990000001',email:'employee@example.test',role:'user',accessState:'pending',invitationState:'pending',createdAt:'2026-10-02T12:00:00Z'};
 async function fixture(page:Page,role='owner'){
  await page.route(/^http:\/\/127\.0\.0\.1:5173\/api\//,async route=>{const path=new URL(route.request().url()).pathname;if(path==='/api/v1/session'){await route.fulfill({json:{authenticated:true,subject:'synthetic-owner',fullName:'Тестовый Владелец',phone:'+79990000000',email:'owner@example.test',tenants:[{...tenant,role}],csrfToken:'test-csrf',activeTenantId:tenant.id}});return};if(path.endsWith('/employees')&&route.request().method()==='GET'){await route.fulfill({json:{items:[employee],total:1,limit:25,offset:0}});return};if(path.endsWith(employee.id)){await route.fulfill({json:employee});return};await route.fulfill({status:403,json:{code:'forbidden',message:'Действие запрещено',requestId:'synthetic-request'}})});
