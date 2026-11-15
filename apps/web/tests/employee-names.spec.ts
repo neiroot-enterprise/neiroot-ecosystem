@@ -7,8 +7,9 @@ const sql=(query:string)=>execFileSync('docker',['compose','exec','-T','postgres
 async function api(page:Page,path:string,data?:unknown,key?:string){const session=await(await page.request.get(base+'/api/v1/session')).json();return page.request.fetch(base+path,{method:data?'POST':'GET',data,headers:{Origin:base,'X-CSRF-Token':session.csrfToken||'',...(key?{'Idempotency-Key':key}:{})}})}
 test('Separate employee names: persisted columns, optional middle name, password and invitation',async({browser})=>{
  test.setTimeout(120000);
- const config=readFileSync('../../.env','utf8'),adminPassword=config.match(/^KEYCLOAK_ADMIN_PASSWORD=(.+)$/m)![1].trim();
- const auth=await fetch(base+'/auth/realms/master/protocol/openid-connect/token',{method:'POST',body:new URLSearchParams({grant_type:'password',client_id:'admin-cli',username:'neiroot-local-admin',password:adminPassword})});
+ const config=readFileSync('../../.env','utf8'),clientSecret=config.match(/^KEYCLOAK_PROVISIONER_SECRET=(.+)$/m)![1].trim();
+ const cleanupToken=()=>fetch(base+'/auth/realms/neiroot/protocol/openid-connect/token',{method:'POST',body:new URLSearchParams({grant_type:'client_credentials',client_id:'neiroot-provisioner',client_secret:clientSecret})});
+ const auth=await cleanupToken();
  if(!auth.ok)throw Error('Cleanup authentication failed');const {access_token}=await auth.json() as {access_token:string};const headers={Authorization:'Bearer '+access_token};
  const suffix=randomUUID(),ownerEmail=`names-owner-${suffix}@example.test`,directEmail=`names-direct-${suffix}@example.test`,inviteEmail=`names-invite-${suffix}@example.test`,emails=[ownerEmail,directEmail,inviteEmail];let tenant='';const contexts=[];
  try{
@@ -19,7 +20,7 @@ test('Separate employee names: persisted columns, optional middle name, password
   await page.getByLabel('Название экосистемы').fill('Синтетическая проверка отдельных имён');await page.getByRole('button',{name:'Создать экосистему',exact:true}).click();await expect(page.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();
   const me=await(await page.request.get(base+'/api/v1/session')).json();tenant=me.activeTenantId;expect(tenant).toMatch(/^[a-f0-9-]{36}$/);const endpoint=`/api/v1/tenants/${tenant}/employees`;
   const owner=(await(await api(page,endpoint)).json()).items[0];expect([owner.lastName,owner.firstName,owner.middleName]).toEqual(['Тестовая','Владелец','Проверка']);
-  await page.goto(base+'/company/employees/new');await page.getByLabel('Фамилия *',{exact:true}).fill('Тестовая-Фамилия');await page.getByLabel('Имя *',{exact:true}).fill('Анна Мария');await page.getByLabel('Отчество').fill('Проверка');const phone='+7'+(Date.now()+1).toString().slice(-10);await page.getByLabel('Телефон *',{exact:true}).fill(phone);await page.getByLabel('Email *',{exact:true}).fill(directEmail);await page.getByText('Задать пароль',{exact:true}).click();await page.getByLabel('Пароль *',{exact:true}).fill(password);await page.getByRole('button',{name:'Создать сотрудника',exact:true}).click();await expect(page.getByRole('heading',{name:'Карточка сотрудника',exact:true})).toBeVisible();await expect(page.locator('dd').filter({hasText:'Анна Мария'})).toHaveCount(1);
+  await page.goto(base+'/company/employees/new');await page.getByLabel('Фамилия *',{exact:true}).fill('Тестовая-Фамилия');await page.getByLabel('Имя *',{exact:true}).fill('Анна Мария');await page.getByLabel('Отчество').fill('Проверка');const phone='+7'+(Date.now()+1).toString().slice(-10);await page.getByLabel('Телефон *',{exact:true}).fill(phone);await page.getByLabel('Email *',{exact:true}).fill(directEmail);await page.getByText('Задать пароль',{exact:true}).click();await page.getByLabel('Пароль *',{exact:true}).fill(password);await page.getByRole('button',{name:'Создать сотрудника',exact:true}).click();await expect(page.getByRole('heading',{name:'Тестовая-Фамилия Анна Мария Проверка',exact:true})).toBeVisible();await expect(page.getByLabel('Имя',{exact:true})).toHaveValue('Анна Мария');
   const directID=page.url().split('/').pop()!;const direct=await(await api(page,endpoint+'/'+directID)).json();expect(direct.fullName).toBe('Тестовая-Фамилия Анна Мария Проверка');expect([direct.lastName,direct.firstName,direct.middleName]).toEqual(['Тестовая-Фамилия','Анна Мария','Проверка']);
   expect(sql(`SELECT last_name='Тестовая-Фамилия' AND first_name='Анна Мария' AND middle_name='Проверка' FROM company.employees WHERE id='${directID}';`)).toBe('t');
   const accounts=await(await fetch(base+'/auth/admin/realms/neiroot/users?exact=true&email='+encodeURIComponent(directEmail),{headers})).json() as any[];expect(accounts[0].firstName).toBe('Анна Мария');expect(accounts[0].lastName).toBe('Тестовая-Фамилия');expect(accounts[0].attributes.middle_name).toEqual(['Проверка']);
@@ -27,13 +28,230 @@ test('Separate employee names: persisted columns, optional middle name, password
   const key=randomUUID(),input={lastName:'Тест',firstName:'Приглашение',phone:'+7'+(Date.now()+2).toString().slice(-10),email:inviteEmail,mode:'invite',role:'user'};
   const created=await api(page,endpoint,input,key);expect(created.status()).toBe(201);const result=await created.json();expect(result.employee.middleName).toBe('');expect((await api(page,endpoint,{...input,firstName:''},randomUUID())).status()).toBe(422);expect((await api(page,endpoint,{...input,lastName:''},randomUUID())).status()).toBe(422);
   const repeated=await api(page,endpoint,input,key);expect((await repeated.json()).employee.id).toBe(result.employee.id);expect((await api(page,endpoint,{...input,middleName:'Другое'},key)).status()).toBe(409);
+  const invitationPath=endpoint+'/'+result.employee.id+'/invitation';
+  const savedInvitation=await (await api(page,invitationPath)).json();
+  expect(savedInvitation.invitationUrl).toBe(result.invitationUrl);
+  expect((await (await api(page,invitationPath)).json()).expiresAt).toBe(savedInvitation.expiresAt);
+  expect((await api(login,invitationPath)).status()).toBe(403);
+  expect((await api(page,`/api/v1/tenants/${randomUUID()}/employees/${result.employee.id}/invitation`)).status()).toBe(403);
+  expect((await api(page,endpoint+'/'+randomUUID()+'/invitation')).status()).toBe(404);
+  const secret=new URLSearchParams(new URL(result.invitationUrl).hash.slice(1)).get('token')!;
+  expect(sql(`SELECT token_ciphertext IS NOT NULL AND position(convert_to('${secret}','UTF8') in token_ciphertext)=0 FROM settings.invitations WHERE employee_id='${result.employee.id}';`)).toBe('t');
+  await page.goto(base+'/company/employees/'+result.employee.id);
+  const roleCard=page.getByRole('region',{name:'Личные данные',exact:true});
+  const rolePicker=roleCard.getByRole('combobox',{name:'Роль в экосистеме',exact:true});
+  await expect(rolePicker).toHaveValue('Пользователь');
+  await rolePicker.fill('Адм');
+  await page.getByRole('option',{name:'Администратор',exact:true}).click();
+  await expect(roleCard.getByRole('button',{name:'Отмена',exact:true})).toBeVisible();
+  await roleCard.getByRole('button',{name:'Отмена',exact:true}).click();
+  await expect(rolePicker).toHaveValue('Пользователь');
+  await expect(roleCard.getByRole('button',{name:'Сохранить',exact:true})).toHaveCount(0);
+  await rolePicker.fill('Адм');
+  await page.getByRole('option',{name:'Администратор',exact:true}).click();
+  expect((await (await api(page,endpoint+'/'+result.employee.id)).json()).role).toBe('user');
+  await roleCard.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await expect(roleCard.getByRole('button',{name:'Сохранить',exact:true})).toHaveCount(0);
+  expect((await (await api(page,endpoint+'/'+result.employee.id)).json()).role).toBe('admin');
+  await rolePicker.fill('Польз');await rolePicker.press('ArrowDown');await rolePicker.press('Enter');
+  await expect(rolePicker).toHaveValue('Пользователь');
+  await roleCard.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await expect(roleCard.getByRole('button',{name:'Сохранить',exact:true})).toHaveCount(0);
+  expect((await (await api(page,endpoint+'/'+result.employee.id)).json()).role).toBe('user');
+  const bordersMatch = () => roleCard.evaluate(card => {
+    const role = card.querySelector('[data-slot=input-group]')!;
+    const email = card.querySelector('input[type=email]')!;
+    return getComputedStyle(role).borderColor === getComputedStyle(email).borderColor;
+  });
+  await rolePicker.blur();
+  await expect.poll(bordersMatch).toBe(true);
+  await rolePicker.focus();
+  await rolePicker.press('Escape');
+  await expect(rolePicker).toHaveValue('Пользователь');
+  await roleCard.getByRole('button',{name:'Показать варианты',exact:true}).click();
+  await expect(page.getByRole('option',{name:'Пользователь',exact:true})).toHaveCSS('background-color','rgb(232, 244, 236)');
+  await page.getByRole('option',{name:'Администратор',exact:true}).hover();
+  await expect(page.getByRole('option',{name:'Администратор',exact:true})).toHaveCSS('background-color','rgb(232, 244, 236)');
+  await expect(page.getByRole('option',{name:'Администратор',exact:true})).toHaveCSS('color','rgb(35, 94, 56)');
+  const roleRows=await page.getByRole('option').evaluateAll(options=>options.map(option=>option.getBoundingClientRect().toJSON()));
+  expect(roleRows[1].top-roleRows[0].bottom).toBe(1);
+  await page.locator('[data-slot="combobox-content"]').screenshot({path:'../../.local/screenshots/role-picker/menu-light.png'});
+  await rolePicker.press('Escape');
+  for(const width of [1280,556,390]){
+    await page.setViewportSize({width,height:900});
+    await roleCard.scrollIntoViewIfNeeded();
+    const roleBounds=await rolePicker.locator('..').boundingBox();
+    const ecosystemBounds=await page.getByRole('combobox',{name:'Экосистема',exact:true}).locator('..').boundingBox();
+    const emailBounds=await roleCard.getByLabel('Email',{exact:true}).boundingBox();
+    expect(roleBounds!.width).toBe(emailBounds!.width);
+    expect(roleBounds!.height).toBe(ecosystemBounds!.height);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await roleCard.screenshot({path:`../../.local/screenshots/role-picker/light-${width}.png`});
+  }
+  await page.getByRole('button',{name:'Включить тёмную тему'}).click();
+  await expect.poll(bordersMatch).toBe(true);
+  await roleCard.screenshot({path:'../../.local/screenshots/role-picker/dark-390.png'});
+  await roleCard.getByRole('button',{name:'Показать варианты',exact:true}).click();
+  await expect(page.getByRole('option',{name:'Пользователь',exact:true})).toHaveCSS('background-color','rgb(32, 56, 42)');
+  await page.getByRole('option',{name:'Администратор',exact:true}).hover();
+  await expect(page.getByRole('option',{name:'Администратор',exact:true})).toHaveCSS('background-color','rgb(32, 56, 42)');
+  await expect(page.getByRole('option',{name:'Администратор',exact:true})).toHaveCSS('color','rgb(217, 245, 225)');
+  await page.locator('[data-slot="combobox-content"]').screenshot({path:'../../.local/screenshots/role-picker/menu-dark.png'});
+  await rolePicker.press('Escape');
+  await page.getByRole('button',{name:'Включить светлую тему'}).click();
+  const connection=page.getByRole('region',{name:'Подключение сотрудника',exact:true});
+  await expect(connection.getByText('Ссылка приглашения',{exact:true})).toHaveCount(0);
+  await expect(connection.getByRole('button',{name:'Выдать новую ссылку'})).toHaveCount(0);
+  await expect(connection.getByRole('button',{name:'Пригласить ссылкой'})).toHaveCount(0);
+  await expect(connection.getByRole('textbox',{name:'Ссылка приглашения',exact:true})).toHaveValue(result.invitationUrl);
+  await expect(roleCard.getByRole('button',{name:'Сохранить роль',exact:true})).toHaveCount(0);
+  await page.reload();
+  await expect(connection.getByRole('textbox',{name:'Ссылка приглашения',exact:true})).toHaveValue(result.invitationUrl);
+  await context.grantPermissions(['clipboard-read','clipboard-write']);
+  await page.setViewportSize({width:390,height:900});
+  const initialCopy=await connection.getByRole('button',{name:'Копировать ссылку',exact:true}).boundingBox();
+  const initialCancel=await connection.getByRole('button',{name:'Отменить приглашение',exact:true}).boundingBox();
+  expect(initialCancel!.y).toBe(initialCopy!.y);
+  expect(initialCancel!.x - initialCopy!.x - initialCopy!.width).toBe(2);
+  await connection.getByRole('button',{name:'Копировать ссылку',exact:true}).click();
+  expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(result.invitationUrl);
+  await page.getByRole('region',{name:'Предприятия и отделы',exact:true}).getByRole('button',{name:'Изменить',exact:true}).click();
+  const assignmentDialog=page.getByRole('dialog',{name:'Предприятия и отделы сотрудника',exact:true});
+  await expect(assignmentDialog.getByRole('button',{name:'Отмена',exact:true})).toBeVisible();
+  await expect(assignmentDialog).toHaveAttribute('data-side','right');
+  await expect(assignmentDialog).toHaveCSS('transition-duration','0.2s');
+  await expect(assignmentDialog).toHaveCSS('transition-timing-function','ease-in-out');
+  const reopenEditor=async()=>{
+    await assignmentDialog.getByRole('button',{name:'Отмена',exact:true}).click();
+    await expect(assignmentDialog).toHaveCount(0);
+    await page.getByRole('region',{name:'Предприятия и отделы',exact:true}).getByRole('button',{name:'Изменить',exact:true}).click();
+    await expect(assignmentDialog).toBeVisible();
+  };
+  // An inline edit on the selected element must survive closing and reopening.
+  await assignmentDialog.evaluate(el=>{el.setAttribute('data-motion-test','same-node');el.style.setProperty('--sheet-motion-duration','950ms');});
+  await expect(assignmentDialog).toHaveCSS('transition-duration','0.95s');
+  await reopenEditor();
+  await expect(assignmentDialog).toHaveAttribute('data-motion-test','same-node');
+  await expect(assignmentDialog).toHaveCSS('transition-duration','0.95s');
+  // Editing the stylesheet rule (as in Chrome Styles) must also persist.
+  await assignmentDialog.evaluate(el=>{
+    el.style.removeProperty('--sheet-motion-duration');
+    const rule=[...document.styleSheets].flatMap(sheet=>[...sheet.cssRules]).find(rule=>rule instanceof CSSStyleRule && rule.selectorText==='.employee-sheet') as CSSStyleRule;
+    if(!rule)throw Error('Missing editable employee-sheet rule');
+    rule.style.setProperty('--sheet-motion-duration','1100ms');
+  });
+  await expect(assignmentDialog).toHaveCSS('transition-duration','1.1s');
+  await reopenEditor();
+  await expect(assignmentDialog).toHaveCSS('transition-duration','1.1s');
+  await assignmentDialog.evaluate(()=>{
+    const rule=[...document.styleSheets].flatMap(sheet=>[...sheet.cssRules]).find(rule=>rule instanceof CSSStyleRule && rule.selectorText==='.employee-sheet') as CSSStyleRule;
+    rule.style.setProperty('--sheet-motion-duration','200ms');
+  });
+  for(const width of [1280,771,390,320]){
+    await page.setViewportSize({width,height:900});
+    await expect.poll(async()=>{
+      const box=await assignmentDialog.boundingBox();
+      return box ? {right:Math.round(box.x+box.width),top:Math.round(box.y),height:Math.round(box.height)} : null;
+    }).toEqual({right:width,top:0,height:900});
+    expect((await assignmentDialog.boundingBox())!.width).toBe(width<640 ? width : 383);
+    expect(await assignmentDialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    await assignmentDialog.screenshot({path:`../../.local/screenshots/employee-card/assignments-sheet-${width}.png`});
+  }
+  const dialogButtons=assignmentDialog.locator('[data-slot="button"], [data-slot="sheet-close"]');
+  expect(await dialogButtons.count()).toBeGreaterThan(2);
+  await expect.poll(()=>dialogButtons.evaluateAll(buttons=>buttons.map(button=>({name:button.textContent,height:button.getBoundingClientRect().height})).filter(button=>Math.abs(button.height-32)>0.1))).toEqual([]);
+  await assignmentDialog.getByRole('button',{name:'Отмена',exact:true}).click();
+  await expect(assignmentDialog).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'Предприятия и отделы',exact:true}).getByRole('button',{name:'Изменить',exact:true})).toBeFocused();
+  for(const width of [1280,556,390]){
+    await page.setViewportSize({width,height:900});await connection.scrollIntoViewIfNeeded();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const copy=await connection.getByRole('button',{name:'Скопировано',exact:true}).boundingBox();
+    const cancel=await connection.getByRole('button',{name:'Отменить приглашение',exact:true}).boundingBox();
+    expect(cancel!.y).toBe(copy!.y);
+    expect(cancel!.x - copy!.x - copy!.width).toBe(2);
+    expect(copy!.height).toBe(24);expect(cancel!.height).toBe(24);
+    const assignments=page.getByRole('region',{name:'Предприятия и отделы',exact:true});
+    const editButton=await assignments.getByRole('button',{name:'Изменить',exact:true}).boundingBox();
+    const assignmentsTitle=await assignments.getByRole('heading',{name:'Предприятия и отделы',exact:true}).boundingBox();
+    const assignmentsCard=await assignments.boundingBox();
+    expect(editButton!.height).toBe(24);
+    expect(Math.abs(editButton!.y+editButton!.height/2-assignmentsTitle!.y-assignmentsTitle!.height/2)).toBeLessThan(0.1);
+    expect(assignmentsTitle!.y-assignmentsCard!.y).toBe(16);
+    expect(assignmentsTitle!.x-assignmentsCard!.x).toBe(16);
+    const pageButtons=await page.locator('section.max-w-3xl [data-slot="button"]').evaluateAll(buttons=>buttons.map(button=>({name:button.textContent,label:button.getAttribute('aria-label'),height:button.getBoundingClientRect().height})).filter(button=>Math.abs(button.height-(button.name==='Изменить'||button.label==='Скопировано'||button.label==='Отменить приглашение'?24:32))>0.1));
+    expect(pageButtons).toEqual([]);
+    const cardGaps=await page.getByRole('region').evaluateAll(cards=>cards.map(card=>{
+      const header=card.querySelector(':scope > [data-slot="card-header"]');
+      const content=card.querySelector(':scope > [data-slot="card-content"]');
+      return header&&content ? content.getBoundingClientRect().top-header.getBoundingClientRect().bottom : null;
+    }).filter(gap=>gap!==null));
+    expect(cardGaps).toEqual([8,8,8]);
+    await assignments.screenshot({path:`../../.local/screenshots/employee-card/assignments-${width}.png`});
+    const gaps=await connection.evaluate(block=>{
+      const header=block.querySelector('[data-slot="card-header"]')!.getBoundingClientRect();
+      const description=block.querySelector('p')!.getBoundingClientRect();
+      const field=block.querySelector('textarea')!.parentElement!.getBoundingClientRect();
+      return [field.top-header.bottom,description.top-field.bottom];
+    });
+    expect(gaps).toEqual([8,8]);
+    await connection.screenshot({path:`../../.local/screenshots/invitations/ready-${width}.png`});
+    expect((await page.getByRole('link',{name:'Список сотрудников',exact:true}).boundingBox())!.height).toBe(32);
+    await page.locator('section.max-w-3xl').screenshot({path:`../../.local/screenshots/employee-card/unified-${width}.png`});
+  }
+  await page.getByRole('button',{name:'Включить тёмную тему'}).click();
+  await connection.screenshot({path:'../../.local/screenshots/invitations/ready-dark.png'});
+  await page.getByRole('button',{name:'Включить светлую тему'}).click();
+  // Automatic renewal while the card is open, concurrent refreshes and final cancellation.
+  const extra=await (await api(page,endpoint,{...input,firstName:'Отмена',phone:'+7'+(Date.now()+3).toString().slice(-10),email:`revoke-${suffix}@example.test`},randomUUID())).json();
+  const extraPath=endpoint+'/'+extra.employee.id+'/invitation';
+  expect((await api(login,extraPath+'/refresh',{})).status()).toBe(403);
+  const noCsrf=await page.request.post(base+extraPath+'/refresh',{headers:{Origin:base}});
+  expect(noCsrf.status()).toBe(403);
+  expect((await api(page,endpoint+'/'+randomUUID()+'/invitation/refresh',{})).status()).toBe(404);
+  sql(`UPDATE settings.invitations SET expires_at=now()+interval '3 seconds' WHERE employee_id='${extra.employee.id}';`);
+  await page.goto(base+'/company/employees/'+extra.employee.id);
+  const automaticLink=connection.getByRole('textbox',{name:'Ссылка приглашения',exact:true});
+  await expect(automaticLink).toHaveValue(extra.invitationUrl);
+  await connection.getByRole('button',{name:'Копировать ссылку',exact:true}).click();
+  await expect(automaticLink).not.toHaveValue(extra.invitationUrl,{timeout:10000});
+  await expect(connection.getByRole('button',{name:'Копировать ссылку',exact:true})).toBeVisible();
+  expect(sql(`SELECT count(*) FROM settings.invitations WHERE employee_id='${extra.employee.id}';`)).toBe('2');
+  const firstRenewed=await (await api(page,extraPath)).json();
+  const stillCurrent=await (await api(page,extraPath+'/refresh',{})).json();
+  expect(stillCurrent).toEqual(firstRenewed);
+  expect((await api(page,'/api/v1/invitations/resolve',{token:new URLSearchParams(new URL(extra.invitationUrl).hash.slice(1)).get('token')})).status()).toBe(410);
+  sql(`UPDATE settings.invitations SET expires_at=now()-interval '1 second' WHERE employee_id='${extra.employee.id}' AND revoked_at IS NULL;`);
+  expect((await api(page,extraPath)).status()).toBe(410);
+  const concurrent=await Promise.all(Array.from({length:6},()=>api(page,extraPath+'/refresh',{})));
+  expect(concurrent.map(r=>r.status())).toEqual(Array(6).fill(200));
+  const concurrentLinks=await Promise.all(concurrent.map(r=>r.json()));
+  const renewed=concurrentLinks[0];
+  expect(concurrentLinks.every(value=>value.invitationUrl===renewed.invitationUrl && value.expiresAt===renewed.expiresAt)).toBe(true);
+  expect(sql(`SELECT count(*) FROM settings.invitations WHERE employee_id='${extra.employee.id}';`)).toBe('3');
+  expect(renewed.invitationUrl).not.toBe(extra.invitationUrl);
+  expect((await (await api(page,extraPath)).json()).invitationUrl).toBe(renewed.invitationUrl);
+  await connection.getByRole('button',{name:'Отменить приглашение',exact:true}).click();
+  await expect(page.getByRole('alertdialog')).toHaveAttribute('data-size','sm');
+  await expect(page.getByRole('alertdialog').getByRole('button',{name:'Оставить',exact:true})).toBeFocused();
+  await page.getByRole('alertdialog').getByRole('button',{name:'Отменить',exact:true}).click();
+  await expect(connection.getByText('Приглашение отменено.',{exact:true})).toBeVisible();
+  expect((await api(page,extraPath)).status()).toBe(410);
+  const cancelled=await Promise.all(Array.from({length:6},()=>api(page,extraPath+'/refresh',{})));
+  expect(cancelled.map(r=>r.status())).toEqual(Array(6).fill(410));
+  expect(sql(`SELECT count(*) FROM settings.invitations WHERE employee_id='${extra.employee.id}';`)).toBe('3');
+  await page.reload();
+  await expect(connection.getByText('Приглашение отменено.',{exact:true})).toBeVisible();
+  await expect(connection.getByRole('textbox',{name:'Ссылка приглашения',exact:true})).toHaveCount(0);
+  expect(sql(`SELECT token_ciphertext IS NULL FROM settings.invitations WHERE employee_id='${extra.employee.id}' ORDER BY created_at DESC LIMIT 1;`)).toBe('t');
   const search=await(await api(page,endpoint+'?search='+encodeURIComponent('Анна Мария'))).json();expect(search.items.map((e:any)=>e.id)).toEqual([directID]);
   const invitedContext=await browser.newContext();contexts.push(invitedContext);const invited=await invitedContext.newPage();await invited.goto(result.invitationUrl);await invited.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();await invited.locator('#lastName').fill(input.lastName);await invited.locator('#firstName').fill(input.firstName);await invited.getByRole('button',{name:'Далее',exact:true}).click();await invited.locator('#username').fill(input.phone);await invited.locator('#email').fill(input.email);await invited.locator('#password').fill(password);await invited.locator('#password-confirm').fill(password);await invited.locator('#kc-register-form input[type="submit"]').click();await invited.getByRole('button',{name:'Принять приглашение',exact:true}).click();await expect(invited.getByRole('heading',{name:'Сотрудники',exact:true})).toBeVisible();
+  expect((await api(page,invitationPath+'/refresh',{})).status()).toBe(409);
   await page.setViewportSize({width:390,height:844});await page.goto(base+'/company/employees/new');await expect(page.getByLabel('Фамилия *',{exact:true})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/employee-names-mobile.png',fullPage:true});
  }finally{
   for(const c of contexts)await c.close();
   if(tenant){if(!/^[a-f0-9-]{36}$/.test(tenant))throw Error('Invalid cleanup tenant');sql(`BEGIN;DELETE FROM settings.invitations WHERE tenant_id='${tenant}';DELETE FROM settings.memberships WHERE tenant_id='${tenant}';DELETE FROM company.employees WHERE tenant_id='${tenant}';DELETE FROM settings.tenants WHERE id='${tenant}';COMMIT;`);}
-  const cleanupAuth=await fetch(base+'/auth/realms/master/protocol/openid-connect/token',{method:'POST',body:new URLSearchParams({grant_type:'password',client_id:'admin-cli',username:'neiroot-local-admin',password:adminPassword})});
+  const cleanupAuth=await cleanupToken();
   if(!cleanupAuth.ok)throw Error('Cleanup refresh failed');headers.Authorization='Bearer '+(await cleanupAuth.json() as {access_token:string}).access_token;
   for(const email of emails){const res=await fetch(base+'/auth/admin/realms/neiroot/users?exact=true&email='+encodeURIComponent(email),{headers});if(!res.ok)throw Error('Cleanup lookup failed');const users=await res.json() as {id:string;email:string}[];for(const user of users){if(user.email!==email)throw Error('Cleanup email mismatch');const removed=await fetch(base+'/auth/admin/realms/neiroot/users/'+user.id,{method:'DELETE',headers});if(!removed.ok)throw Error('Cleanup removal failed');}}
  }

@@ -304,7 +304,9 @@ type AuthenticatedSession struct {
 	Authenticated  AuthenticatedSessionAuthenticated `json:"authenticated"`
 	CSRFToken      string                            `json:"csrfToken"`
 	Email          string                            `json:"email"`
+	FirstName      string                            `json:"firstName,omitempty"`
 	FullName       string                            `json:"fullName"`
+	LastName       string                            `json:"lastName,omitempty"`
 	Phone          string                            `json:"phone"`
 	Subject        string                            `json:"subject"`
 	Tenants        []Tenant                          `json:"tenants"`
@@ -406,16 +408,19 @@ type Invitation struct {
 
 // InvitationLink defines model for InvitationLink.
 type InvitationLink struct {
-	InvitationURL string `json:"invitationUrl"`
+	ExpiresAt     *time.Time `json:"expiresAt,omitempty"`
+	InvitationURL string     `json:"invitationUrl"`
 }
 
 // Me defines model for Me.
 type Me struct {
-	Email    string   `json:"email"`
-	FullName string   `json:"fullName"`
-	Phone    string   `json:"phone"`
-	Subject  string   `json:"subject"`
-	Tenants  []Tenant `json:"tenants"`
+	Email     string   `json:"email"`
+	FirstName string   `json:"firstName,omitempty"`
+	FullName  string   `json:"fullName"`
+	LastName  string   `json:"lastName,omitempty"`
+	Phone     string   `json:"phone"`
+	Subject   string   `json:"subject"`
+	Tenants   []Tenant `json:"tenants"`
 }
 
 // MoveDepartmentInput defines model for MoveDepartmentInput.

@@ -4,6 +4,7 @@
 .local/
 node_modules/
 dist/
+apps/web/dist-auth/
 playwright-report/
 test-results/
 *.exe

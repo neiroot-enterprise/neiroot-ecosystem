@@ -10,7 +10,10 @@ import (
 	"neiroot/services/core/internal/modules/settings/domain"
 )
 
-type Repository struct{ DB *storage.DB }
+type Repository struct {
+	DB               *storage.DB
+	InvitationCipher *InvitationCipher
+}
 
 func (r *Repository) ListTenants(ctx context.Context, sub string) ([]domain.Tenant, error) {
 	rows, err := r.DB.Q(ctx).Query(ctx, "SELECT t.id::text,t.name,m.role FROM settings.tenants t JOIN settings.memberships m ON m.tenant_id=t.id WHERE m.subject=$1 ORDER BY t.created_at,t.id", sub)
@@ -106,11 +109,36 @@ func (r *Repository) ChangeRole(ctx context.Context, t, e string, role domain.Ro
 	return err
 }
 func (r *Repository) Issue(ctx context.Context, i app.Invitation) error {
+	encrypted, err := r.InvitationCipher.Encrypt(i)
+	if err != nil {
+		return err
+	}
 	if err := r.Revoke(ctx, i.TenantID, i.EmployeeID); err != nil {
 		return err
 	}
-	_, err := r.DB.Q(ctx).Exec(ctx, "INSERT INTO settings.invitations(id,tenant_id,employee_id,token_hash,email,expires_at) VALUES($1,$2,$3,$4,$5,$6)", i.ID, i.TenantID, i.EmployeeID, i.Hash, i.Email, i.ExpiresAt)
+	_, err = r.DB.Q(ctx).Exec(ctx, "INSERT INTO settings.invitations(id,tenant_id,employee_id,token_hash,email,expires_at,token_ciphertext,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,clock_timestamp())", i.ID, i.TenantID, i.EmployeeID, i.Hash, i.Email, i.ExpiresAt, encrypted)
 	return err
+}
+
+func (r *Repository) CurrentInvitation(ctx context.Context, tenant, employee string) (app.Invitation, error) {
+	var i app.Invitation
+	var encrypted []byte
+	err := r.DB.Q(ctx).QueryRow(ctx, "SELECT id::text,tenant_id::text,employee_id::text,email,token_hash,expires_at,coalesce(accepted_by,''),revoked_at IS NOT NULL,token_ciphertext FROM settings.invitations WHERE tenant_id=$1 AND employee_id=$2 ORDER BY created_at DESC,id DESC LIMIT 1", tenant, employee).Scan(&i.ID, &i.TenantID, &i.EmployeeID, &i.Email, &i.Hash, &i.ExpiresAt, &i.AcceptedBy, &i.Revoked, &encrypted)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return i, platform.Fail(404, "invitation_not_found", "Приглашение не найдено.")
+	}
+	if err != nil {
+		return i, err
+	}
+	// Missing ciphertext is handled after the application checks invitation state.
+	if len(encrypted) == 0 {
+		return i, nil
+	}
+	i.Token, err = r.InvitationCipher.Decrypt(i, encrypted)
+	if err != nil {
+		return i, platform.Fail(503, "invitation_unavailable", "Не удалось загрузить ссылку приглашения.")
+	}
+	return i, nil
 }
 func (r *Repository) LockGrant(ctx context.Context, tenant, employee string) error {
 	var id string
@@ -133,10 +161,10 @@ func (r *Repository) Lookup(ctx context.Context, hash string, lock bool) (app.In
 	return i, err
 }
 func (r *Repository) Accept(ctx context.Context, id, sub string) error {
-	_, err := r.DB.Q(ctx).Exec(ctx, "UPDATE settings.invitations SET accepted_by=$2 WHERE id=$1", id, sub)
+	_, err := r.DB.Q(ctx).Exec(ctx, "UPDATE settings.invitations SET accepted_by=$2,token_ciphertext=NULL WHERE id=$1", id, sub)
 	return err
 }
 func (r *Repository) Revoke(ctx context.Context, t, e string) error {
-	_, err := r.DB.Q(ctx).Exec(ctx, "UPDATE settings.invitations SET revoked_at=now() WHERE tenant_id=$1 AND employee_id=$2 AND accepted_by IS NULL AND revoked_at IS NULL", t, e)
+	_, err := r.DB.Q(ctx).Exec(ctx, "UPDATE settings.invitations SET revoked_at=now(),token_ciphertext=NULL WHERE tenant_id=$1 AND employee_id=$2 AND accepted_by IS NULL AND revoked_at IS NULL", t, e)
 	return err
 }

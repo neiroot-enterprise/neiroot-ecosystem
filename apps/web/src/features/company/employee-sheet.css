@@ -1,0 +1,5 @@
+/* shadcn base-nova defaults. Edit on .employee-sheet in Chrome DevTools. */
+.employee-sheet {
+  --sheet-motion-duration: 200ms;
+  --sheet-motion-easing: ease-in-out;
+}

@@ -14,6 +14,7 @@ import (
 
 type Invitation struct {
 	ID, TenantID, EmployeeID, Email, Hash, AcceptedBy string
+	Token                                             string `json:"-"`
 	ExpiresAt                                         time.Time
 	Revoked                                           bool
 }
@@ -29,6 +30,7 @@ type Repository interface {
 	ChangeRole(context.Context, string, string, domain.Role) error
 	Issue(context.Context, Invitation) error
 	Lookup(context.Context, string, bool) (Invitation, error)
+	CurrentInvitation(context.Context, string, string) (Invitation, error)
 	Accept(context.Context, string, string) error
 	Revoke(context.Context, string, string) error
 	LockOwner(context.Context, string) error
@@ -151,8 +153,58 @@ func (s *Service) Issue(ctx context.Context, tenant, employee string) (string, e
 		return "", platform.Fail(409, "already_active", "Сотрудник уже подключён к экосистеме.")
 	}
 	token := platform.Random()
-	inv := Invitation{ID: platform.UUID(), TenantID: tenant, EmployeeID: employee, Email: grant.Email, Hash: hash(token), ExpiresAt: s.clock().Add(7 * 24 * time.Hour)}
+	inv := Invitation{ID: platform.UUID(), TenantID: tenant, EmployeeID: employee, Email: grant.Email, Hash: hash(token), Token: token, ExpiresAt: s.clock().Add(7 * 24 * time.Hour)}
 	return token, s.Repo.Issue(ctx, inv)
+}
+
+func (s *Service) InvitationLink(ctx context.Context, p security.Principal, tenant, employee string) (Invitation, error) {
+	return s.invitationLink(ctx, p, tenant, employee, false)
+}
+
+// RefreshInvitation rotates only an expired, still-pending invitation.
+// The grant lock makes concurrent refreshes and cancellation serialize.
+func (s *Service) RefreshInvitation(ctx context.Context, p security.Principal, tenant, employee string) (Invitation, error) {
+	return s.invitationLink(ctx, p, tenant, employee, true)
+}
+
+func (s *Service) invitationLink(ctx context.Context, p security.Principal, tenant, employee string, refresh bool) (Invitation, error) {
+	var inv Invitation
+	err := s.Tx.Within(ctx, tenant, func(ctx context.Context) error {
+		if err := s.Authorize(ctx, tenant, p.Subject, true); err != nil {
+			return err
+		}
+		if err := s.Repo.LockGrant(ctx, tenant, employee); err != nil {
+			return err
+		}
+		grants, err := s.Repo.Grants(ctx, tenant, []string{employee})
+		if err != nil {
+			return err
+		}
+		if grants[employee].Subject != "" {
+			return platform.Fail(409, "already_active", "Сотрудник уже подключён к экосистеме.")
+		}
+		inv, err = s.Repo.CurrentInvitation(ctx, tenant, employee)
+		if err != nil {
+			return err
+		}
+		if refresh && !inv.Revoked && inv.AcceptedBy == "" && !s.clock().Before(inv.ExpiresAt) {
+			if _, err := s.Issue(ctx, tenant, employee); err != nil {
+				return err
+			}
+			inv, err = s.Repo.CurrentInvitation(ctx, tenant, employee)
+			if err != nil {
+				return err
+			}
+		}
+		if err := s.valid(inv); err != nil {
+			return err
+		}
+		if inv.Token == "" {
+			return platform.Fail(503, "invitation_unavailable", "Не удалось загрузить ссылку приглашения.")
+		}
+		return nil
+	})
+	return inv, err
 }
 func (s *Service) Reissue(ctx context.Context, p security.Principal, tenant, employee string) (string, error) {
 	var token string

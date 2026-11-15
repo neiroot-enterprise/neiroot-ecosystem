@@ -44,7 +44,10 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   await page.screenshot({path:'test-results/registration-step2-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'Зарегистрироваться',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Создайте экосистему'})).toBeVisible();
-  const session=await (await page.request.get(base+'/api/v1/session')).json();expect(session.fullName).toBe('Тестовая Регистрация Проверка');expect(session.tenants).toHaveLength(0);
+  const session=await (await page.request.get(base+'/api/v1/session')).json();
+  expect(session).toMatchObject({
+   fullName:'Тестовая Регистрация Проверка',firstName:'Регистрация',lastName:'Тестовая',tenants:[],
+  });
   await logout(page);
   for(const username of [phone,email]) {
    await page.goto(base);await expect(page.locator('#kc-login')).toBeVisible();

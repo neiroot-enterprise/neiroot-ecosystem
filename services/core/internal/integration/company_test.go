@@ -30,7 +30,11 @@ func TestRealPostgresIsolationPermissionsInvitationsAndRetries(t *testing.T) {
 	if err = db.Pool.QueryRow(ctx, "SELECT rolbypassrls,rolsuper FROM pg_roles WHERE rolname=current_user").Scan(&bypass, &super); err != nil || bypass || super {
 		t.Fatal("test must use the restricted application role")
 	}
-	s := &settings.Service{Repo: &settingsPG.Repository{DB: db}, Tx: db, PublicURL: "https://localhost:8443"}
+	cipher, err := settingsPG.NewInvitationCipher(strings.Repeat("ab", 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &settings.Service{Repo: &settingsPG.Repository{DB: db, InvitationCipher: cipher}, Tx: db, PublicURL: "https://localhost:8443"}
 	c := &company.Service{Repo: &companyPG.Repository{DB: db}, Access: s, Tx: db, PublicURL: "https://localhost:8443"}
 	s.Employees = c
 	makePrincipal := func(label string) security.Principal {
