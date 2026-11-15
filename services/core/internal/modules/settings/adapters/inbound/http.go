@@ -45,7 +45,10 @@ func (h HTTP) Protected(r chi.Router) {
 			platform.WriteError(w, r, err)
 			return
 		}
-		platform.JSON(w, 200, contracts.Me{Subject: p.Subject, FullName: p.FullName, Phone: p.Phone, Email: p.Email, Tenants: tenantsDTO(spaces)})
+		platform.JSON(w, 200, contracts.Me{
+			Subject: p.Subject, FullName: p.FullName, FirstName: p.FirstName, LastName: p.LastName,
+			Phone: p.Phone, Email: p.Email, Tenants: tenantsDTO(spaces),
+		})
 	})
 	r.Get("/api/v1/tenants", func(w http.ResponseWriter, r *http.Request) {
 		value, err := h.Service.ListTenants(r.Context(), identity.Current(r.Context()))
@@ -103,6 +106,22 @@ func (h HTTP) Tenant(r chi.Router) {
 			return
 		}
 		platform.JSON(w, 201, contracts.InvitationLink{InvitationURL: value})
+	})
+	r.Get("/employees/{employeeId:[0-9a-f-]{36}}/invitation", func(w http.ResponseWriter, r *http.Request) {
+		inv, err := h.Service.InvitationLink(r.Context(), identity.Current(r.Context()), chi.URLParam(r, "tenantId"), chi.URLParam(r, "employeeId"))
+		if err != nil {
+			platform.WriteError(w, r, err)
+			return
+		}
+		platform.JSON(w, 200, contracts.InvitationLink{InvitationURL: h.Service.PublicURL + "/invite#token=" + inv.Token, ExpiresAt: &inv.ExpiresAt})
+	})
+	r.Post("/employees/{employeeId:[0-9a-f-]{36}}/invitation/refresh", func(w http.ResponseWriter, r *http.Request) {
+		inv, err := h.Service.RefreshInvitation(r.Context(), identity.Current(r.Context()), chi.URLParam(r, "tenantId"), chi.URLParam(r, "employeeId"))
+		if err != nil {
+			platform.WriteError(w, r, err)
+			return
+		}
+		platform.JSON(w, 200, contracts.InvitationLink{InvitationURL: h.Service.PublicURL + "/invite#token=" + inv.Token, ExpiresAt: &inv.ExpiresAt})
 	})
 	r.Delete("/employees/{employeeId:[0-9a-f-]{36}}/invitation", func(w http.ResponseWriter, r *http.Request) {
 		err := h.Service.Revoke(r.Context(), identity.Current(r.Context()), chi.URLParam(r, "tenantId"), chi.URLParam(r, "employeeId"))

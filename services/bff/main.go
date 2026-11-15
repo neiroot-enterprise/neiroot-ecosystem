@@ -32,6 +32,8 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
+var errInvalidCiphertext = errors.New("invalid ciphertext")
+
 type session struct {
 	ID, Access, Refresh, CSRF, Tenant string
 	AccessExpiry, Expiry              time.Time
@@ -59,10 +61,13 @@ func (s *server) encrypt(value string) []byte {
 func (s *server) decrypt(value []byte) (string, error) {
 	n := s.Cipher.NonceSize()
 	if len(value) < n {
-		return "", errors.New("invalid ciphertext")
+		return "", errInvalidCiphertext
 	}
 	plain, err := s.Cipher.Open(nil, value[:n], value[n:], nil)
-	return string(plain), err
+	if err != nil {
+		return "", errInvalidCiphertext
+	}
+	return string(plain), nil
 }
 func cookie(w http.ResponseWriter, name, value string, age int) {
 	http.SetCookie(w, &http.Cookie{Name: name, Value: value, Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: age})
@@ -95,11 +100,7 @@ func (s *server) getSession(w http.ResponseWriter, r *http.Request) (*session, e
 	defer lock.Unlock()
 	v, err := s.load(r.Context(), c.Value)
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, platform.Fail(503, "session_unavailable", "Сервис сессий временно недоступен. Повторите действие.")
-		}
-		cookie(w, "__Host-neiroot", "", -1)
-		return nil, platform.Fail(401, "unauthenticated", "Войдите в аккаунт.")
+		return nil, sessionLoadError(w, err)
 	}
 	if time.Until(v.AccessExpiry) < 30*time.Second {
 		ctx := context.WithValue(r.Context(), oauth2.HTTPClient, s.HTTP)
@@ -117,6 +118,14 @@ func (s *server) getSession(w http.ResponseWriter, r *http.Request) (*session, e
 		}
 	}
 	return v, nil
+}
+
+func sessionLoadError(w http.ResponseWriter, err error) error {
+	if errors.Is(err, pgx.ErrNoRows) || errors.Is(err, errInvalidCiphertext) {
+		cookie(w, "__Host-neiroot", "", -1)
+		return platform.Fail(401, "unauthenticated", "Войдите в аккаунт.")
+	}
+	return platform.Fail(503, "session_unavailable", "Сервис сессий временно недоступен. Повторите действие.")
 }
 func (s *server) safeOrigin(w http.ResponseWriter, r *http.Request, next http.Handler) {
 	if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" {
@@ -265,7 +274,11 @@ func (s *server) info(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	platform.JSON(w, 200, contracts.AuthenticatedSession{Authenticated: contracts.True, CSRFToken: v.CSRF, ActiveTenantID: v.Tenant, Subject: info.Subject, FullName: info.FullName, Phone: info.Phone, Email: info.Email, Tenants: info.Tenants})
+	platform.JSON(w, 200, contracts.AuthenticatedSession{
+		Authenticated: contracts.True, CSRFToken: v.CSRF, ActiveTenantID: v.Tenant,
+		Subject: info.Subject, FullName: info.FullName, FirstName: info.FirstName, LastName: info.LastName,
+		Phone: info.Phone, Email: info.Email, Tenants: info.Tenants,
+	})
 }
 func (s *server) selectTenant(w http.ResponseWriter, r *http.Request) {
 	var input contracts.TenantSelection

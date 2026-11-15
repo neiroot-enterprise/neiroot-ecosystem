@@ -36,7 +36,11 @@ func main() {
 		panic(err)
 	}
 	defer db.Pool.Close()
-	settings := &settingsApp.Service{Repo: &settingsPG.Repository{DB: db}, Tx: db, PublicURL: platform.Env("PUBLIC_URL")}
+	invitationCipher, err := settingsPG.NewInvitationCipher(platform.Env("INVITATION_ENCRYPTION_KEY"))
+	if err != nil {
+		panic(err)
+	}
+	settings := &settingsApp.Service{Repo: &settingsPG.Repository{DB: db, InvitationCipher: invitationCipher}, Tx: db, PublicURL: platform.Env("PUBLIC_URL")}
 	company := &companyApp.Service{Repo: &companyPG.Repository{DB: db}, Access: settings, Tx: db, PublicURL: platform.Env("PUBLIC_URL"), Identity: &settingsPG.Keycloak{BaseURL: platform.Env("KEYCLOAK_INTERNAL_URL"), Realm: "neiroot", ClientID: "neiroot-provisioner", Secret: platform.Env("KEYCLOAK_PROVISIONER_SECRET"), HTTP: &http.Client{Timeout: 15 * time.Second}}}
 	settings.Employees = company
 	r := chi.NewRouter()

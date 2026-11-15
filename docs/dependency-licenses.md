@@ -45,21 +45,34 @@
 
 | Пакет | Версия | Лицензия |
 |---|---|---|
+| @base-ui/react | 1.9.0 | MIT |
+| @fontsource-variable/geist | 5.3.0 | OFL-1.1 |
+| @fontsource-variable/onest | 5.3.1 | OFL-1.1 |
 | @hookform/resolvers | 5.9.1 | MIT |
 | @playwright/test | 1.63.0 | Apache-2.0 |
+| cn | 0.2.6 | MIT |
+| @tailwindcss/vite | 4.3.5 | MIT |
 | @tanstack/react-query | 5.104.1 | MIT |
+| @tanstack/react-store | 0.11.2 | MIT |
+| @tanstack/react-table | 9.3.1 | MIT |
 | @types/node | 24.19.1 | MIT |
 | @types/react | 19.3.0 | MIT |
 | @types/react-dom | 19.3.0 | MIT |
 | @vitejs/plugin-react | 6.1.1 | MIT |
+| class-variance-authority | 0.7.1 | Apache-2.0 |
+| cn | 0.5.2 | MIT |
 | lucide-react | 1.50.0 | ISC |
 | react | 19.3.0 | MIT |
 | react-dom | 19.3.0 | MIT |
 | react-hook-form | 7.89.0 | MIT |
 | react-router-dom | 7.18.4 | MIT |
+| shadcn | 4.23.0 | MIT |
+| cn | 0.2.6 | MIT |
+| tailwindcss | 4.3.5 | MIT |
+| tw-animate-css | 1.4.0 | MIT |
 | typescript | 7.0.2 | Apache-2.0 |
-| vite | 8.3.2 | MIT |
-| zod | 4.6.5 | MIT |
+| vite | 8.3.6 | MIT |
+| zod | 4.6.7 | MIT |
 | openapi-typescript | 7.13.0 | MIT |
 | typescript | 5.9.3 | Apache-2.0 |
 | @viz-js/viz | 3.25.0 | MIT |

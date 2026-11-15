@@ -1340,7 +1340,43 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantId}/employees/{employeeId}/invitation/refresh": {
+      "post": {
+        "operationId": "refreshInvitationLink",
+        "description": "Owner/admin, Origin and CSRF required. Return the same pending link until expiry; rotate an expired pending link atomically for seven days. Never recreate revoked, accepted or missing invitations. Concurrent calls return one current link.",
+        "parameters": [
+          {"name": "tenantId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "employeeId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Current invitation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InvitationLink"}}}},
+          "401": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "403": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "404": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "409": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "410": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "503": {"description": "Request failed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}}
+        }
+      }
+    },
     "/api/v1/tenants/{tenantId}/employees/{employeeId}/invitation": {
+      "get": {
+        "operationId": "getInvitationLink",
+        "description": "Owner/admin only. Read the current pending invitation without reissuing it or extending expiry. Does not return accepted, revoked or expired secrets.",
+        "parameters": [
+          {"name": "tenantId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "employeeId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Current invitation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InvitationLink"}}}},
+          "401": {"description": "Authentication required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "403": {"description": "Owner/admin permission required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "404": {"description": "Employee or invitation not found", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "409": {"description": "Employee already connected", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "410": {"description": "Invitation expired or revoked", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}},
+          "503": {"description": "Invitation storage unavailable", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}}}
+        }
+      },
       "post": {
         "operationId": "reissueInvitation",
         "responses": {
@@ -5834,6 +5870,14 @@
           "fullName": {
             "type": "string"
           },
+          "firstName": {
+            "type": "string",
+            "x-go-type-skip-optional-pointer": true
+          },
+          "lastName": {
+            "type": "string",
+            "x-go-type-skip-optional-pointer": true
+          },
           "phone": {
             "type": "string"
           },
@@ -5895,6 +5939,14 @@
           },
           "fullName": {
             "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "x-go-type-skip-optional-pointer": true
+          },
+          "lastName": {
+            "type": "string",
+            "x-go-type-skip-optional-pointer": true
           },
           "phone": {
             "type": "string"
@@ -5970,6 +6022,10 @@
           "invitationUrl"
         ],
         "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "invitationUrl": {
             "type": "string",
             "x-go-name": "InvitationURL"

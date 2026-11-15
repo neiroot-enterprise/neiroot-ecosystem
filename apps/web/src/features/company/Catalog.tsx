@@ -64,7 +64,7 @@ function DepartmentDirectory({tenant,onDirty}:{tenant:Tenant;onDirty:Dirty}){
  const query=useData<ItemList>(tenant,'/businesses?status=all&limit=100');
  const[selected,setSelected]=useState<Item>();
  useEffect(()=>{setSelected(query.data?.items.find(b=>b.id===id))},[query.data,id]);
- return <section><h1>Отделы</h1><CatalogTabs/><BusinessSelector tenant={tenant} value={id} onSelect={b=>{setSelected(b);setParams({business:b.id})}}/>{selected?<DepartmentTree key={selected.id} tenant={tenant} business={selected} onDirty={onDirty}/>:id?<SelectedBusiness tenant={tenant} id={id} onDirty={onDirty}/>:<p className="empty">Выберите предприятие для просмотра дерева отделов.</p>}</section>;
+ return <section><div className="section-heading"><h1>Отделы</h1></div><CatalogTabs/><BusinessSelector tenant={tenant} value={id} onSelect={b=>{setSelected(b);setParams({business:b.id})}}/>{selected?<DepartmentTree key={selected.id} tenant={tenant} business={selected} onDirty={onDirty}/>:id?<SelectedBusiness tenant={tenant} id={id} onDirty={onDirty}/>:<p className="empty">Выберите предприятие для просмотра дерева отделов.</p>}</section>;
 }
 function SelectedBusiness({tenant,id,onDirty}:{tenant:Tenant;id:string;onDirty:Dirty}){const q=useData<Item>(tenant,`/businesses/${id}`);return q.isPending?<Busy/>:q.data?<DepartmentTree tenant={tenant} business={q.data} onDirty={onDirty}/>:<QueryError error={q.error} retry={()=>void q.refetch()}/>}
 function BusinessSelector({tenant,value,onSelect}:{tenant:Tenant;value:string;onSelect:(item:Item)=>void}){

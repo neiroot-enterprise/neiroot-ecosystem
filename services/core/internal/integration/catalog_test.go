@@ -12,6 +12,7 @@ import (
 	settingsPG "neiroot/services/core/internal/modules/settings/adapters/outbound"
 	settings "neiroot/services/core/internal/modules/settings/application"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -31,7 +32,11 @@ func TestCatalogRealPostgres(t *testing.T) {
 	if err = db.Pool.QueryRow(ctx, "SELECT rolbypassrls,rolsuper FROM pg_roles WHERE rolname=current_user").Scan(&bypass, &super); err != nil || bypass || super {
 		t.Fatal("must use RLS application role", err)
 	}
-	settingsService := &settings.Service{Repo: &settingsPG.Repository{DB: db}, Tx: db}
+	cipher, err := settingsPG.NewInvitationCipher(strings.Repeat("ab", 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	settingsService := &settings.Service{Repo: &settingsPG.Repository{DB: db, InvitationCipher: cipher}, Tx: db}
 	employees := &app.Service{Repo: &pg.Repository{DB: db}, Tx: db, Access: settingsService}
 	settingsService.Employees = employees
 	service := &app.CatalogService{Repo: &pg.Repository{DB: db}, Tx: db, Access: settingsService}

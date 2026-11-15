@@ -164,7 +164,7 @@ export interface paths {
         patch: operations["changeEmployeeRole"];
         trace?: never;
     };
-    "/api/v1/tenants/{tenantId}/employees/{employeeId}/invitation": {
+    "/api/v1/tenants/{tenantId}/employees/{employeeId}/invitation/refresh": {
         parameters: {
             query?: never;
             header?: never;
@@ -172,6 +172,24 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        /** @description Owner/admin, Origin and CSRF required. Return the same pending link until expiry; rotate an expired pending link atomically for seven days. Never recreate revoked, accepted or missing invitations. Concurrent calls return one current link. */
+        post: operations["refreshInvitationLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/employees/{employeeId}/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Owner/admin only. Read the current pending invitation without reissuing it or extending expiry. Does not return accepted, revoked or expired secrets. */
+        get: operations["getInvitationLink"];
         put?: never;
         post: operations["reissueInvitation"];
         delete: operations["revokeInvitation"];
@@ -634,6 +652,8 @@ export interface components {
             authenticated: true;
             subject: string;
             fullName: string;
+            firstName?: string;
+            lastName?: string;
             phone: string;
             email: string;
             tenants: components["schemas"]["Tenant"][];
@@ -648,6 +668,8 @@ export interface components {
         Me: {
             subject: string;
             fullName: string;
+            firstName?: string;
+            lastName?: string;
             phone: string;
             email: string;
             tenants: components["schemas"]["Tenant"][];
@@ -667,6 +689,8 @@ export interface components {
             expiresAt: string;
         };
         InvitationLink: {
+            /** Format: date-time */
+            expiresAt?: string;
             invitationUrl: string;
         };
         OnboardingInput: {
@@ -1898,6 +1922,160 @@ export interface operations {
                 };
             };
             /** @description Request failed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    refreshInvitationLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current invitation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationLink"];
+                };
+            };
+            /** @description Request failed */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request failed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    getInvitationLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current invitation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationLink"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Owner/admin permission required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Employee or invitation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Employee already connected */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invitation expired or revoked */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invitation storage unavailable */
             503: {
                 headers: {
                     [name: string]: unknown;

@@ -6,6 +6,7 @@ x-core-env: &core-env
   OIDC_INTERNAL_ISSUER: http://keycloak:8080/auth/realms/neiroot
   KEYCLOAK_INTERNAL_URL: http://keycloak:8080/auth
   KEYCLOAK_PROVISIONER_SECRET: ${KEYCLOAK_PROVISIONER_SECRET}
+  INVITATION_ENCRYPTION_KEY: ${INVITATION_ENCRYPTION_KEY}
 x-bff-env: &bff-env
   DATABASE_URL: postgres://bff_app:${BFF_APP_PASSWORD}@postgres:5432/bff?sslmode=disable
   PUBLIC_URL: https://localhost:8443
