@@ -96,6 +96,39 @@ function enhanceLanguageSelect(select, label) {
   });
 }
 
+function addSignInThemeToggle(header) {
+  const root = document.documentElement;
+  const storageKey = 'neiroot-theme';
+  const isRussian = root.lang.startsWith('ru');
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'neiroot-theme-toggle';
+  const icons = {
+    moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6.5 6.5 0 0 0 8.268 8.268c.344-.215.825-.004.803.401Z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42m0-14.14-1.42 1.42M6.35 17.65l-1.42 1.42"/>',
+  };
+
+  function render(dark) {
+    root.classList.toggle('dark', dark);
+    const label = dark
+      ? (isRussian ? 'Включить светлую тему' : 'Switch to light theme')
+      : (isRussian ? 'Включить тёмную тему' : 'Switch to dark theme');
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${dark ? icons.sun : icons.moon}</svg>`;
+  }
+
+  let dark = false;
+  try { dark = localStorage.getItem(storageKey) === 'dark'; } catch {}
+  render(dark);
+  button.addEventListener('click', () => {
+    dark = !dark;
+    render(dark);
+    try { localStorage.setItem(storageKey, dark ? 'dark' : 'light'); } catch {}
+  });
+  header.append(button);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const main = document.querySelector('.pf-v5-c-login__main');
   const script = document.querySelector('script[src*="neiroot.js"]');
@@ -120,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (select) enhanceLanguageSelect(select, label);
     }
   }
+
+  if (header) addSignInThemeToggle(header);
 
   const form = document.querySelector('#kc-register-form');
   const phone = document.querySelector('input[name="username"]');
