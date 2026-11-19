@@ -9,7 +9,6 @@
 **/playwright-report
 tmp
 output
-docs/design/references
 
 # Personal launch helpers retained on disk must not enter the build context.
 scripts/start-local.ps1

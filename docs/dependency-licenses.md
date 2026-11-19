@@ -1,6 +1,6 @@
 # Версии и лицензии
 
-Реестр получен из package-lock.json и установленного Go module cache; полный граф с npm integrity — [dependency-licenses.json](dependency-licenses.json). Обновление: node scripts/update-license-inventory.cjs; NEIROOT_GO задаёт абсолютный путь к Go при необходимости.
+Реестр получен из package-lock.json и установленного Go module cache; полный граф с npm integrity — [dependency-licenses.json](dependency-licenses.json). Полное обновление: node scripts/update-license-inventory.cjs; NEIROOT_GO задаёт абсолютный путь к Go при необходимости. Пересборка этого Markdown по сохранённому JSON и прямым зависимостям lock-файлов: node scripts/update-license-inventory.cjs --render-only. Этот режим сохраняет JSON и дату сбора реестра (2026-11-12).
 
 ## Runtime и инструменты
 
@@ -43,40 +43,40 @@
 
 ## Прямые npm-зависимости
 
-| Пакет | Версия | Лицензия |
-|---|---|---|
-| @base-ui/react | 1.9.0 | MIT |
-| @fontsource-variable/geist | 5.3.0 | OFL-1.1 |
-| @fontsource-variable/onest | 5.3.1 | OFL-1.1 |
-| @hookform/resolvers | 5.9.1 | MIT |
-| @playwright/test | 1.63.0 | Apache-2.0 |
-| cn | 0.2.6 | MIT |
-| @tailwindcss/vite | 4.3.5 | MIT |
-| @tanstack/react-query | 5.104.1 | MIT |
-| @tanstack/react-store | 0.11.2 | MIT |
-| @tanstack/react-table | 9.3.1 | MIT |
-| @types/node | 24.19.1 | MIT |
-| @types/react | 19.3.0 | MIT |
-| @types/react-dom | 19.3.0 | MIT |
-| @vitejs/plugin-react | 6.1.1 | MIT |
-| class-variance-authority | 0.7.1 | Apache-2.0 |
-| cn | 0.5.2 | MIT |
-| lucide-react | 1.50.0 | ISC |
-| react | 19.3.0 | MIT |
-| react-dom | 19.3.0 | MIT |
-| react-hook-form | 7.89.0 | MIT |
-| react-router-dom | 7.18.4 | MIT |
-| shadcn | 4.23.0 | MIT |
-| cn | 0.2.6 | MIT |
-| tailwindcss | 4.3.5 | MIT |
-| tw-animate-css | 1.4.0 | MIT |
-| typescript | 7.0.2 | Apache-2.0 |
-| vite | 8.3.6 | MIT |
-| zod | 4.6.7 | MIT |
-| openapi-typescript | 7.13.0 | MIT |
-| typescript | 5.9.3 | Apache-2.0 |
-| @viz-js/viz | 3.25.0 | MIT |
-| playwright | 1.62.1 | Apache-2.0 |
-| sharp | 0.35.4 | Apache-2.0 |
+Строка соответствует записи dependencies или devDependencies конкретного package.json и корневой записи установленного пакета в его lock-файле. Вложенные транзитивные версии остаются в JSON. dependencies — зависимости приложения или инструмента, devDependencies — зависимости его разработки.
+
+| Каталог | Раздел package.json | Пакет | Версия | Лицензия |
+|---|---|---|---|---|
+| apps/web | dependencies | @base-ui/react | 1.9.0 | MIT |
+| apps/web | dependencies | @fontsource-variable/geist | 5.3.0 | OFL-1.1 |
+| apps/web | dependencies | @fontsource-variable/onest | 5.3.1 | OFL-1.1 |
+| apps/web | dependencies | @hookform/resolvers | 5.9.1 | MIT |
+| apps/web | dependencies | @tanstack/react-query | 5.104.1 | MIT |
+| apps/web | dependencies | @tanstack/react-store | 0.11.2 | MIT |
+| apps/web | dependencies | @tanstack/react-table | 9.3.1 | MIT |
+| apps/web | dependencies | class-variance-authority | 0.7.1 | Apache-2.0 |
+| apps/web | dependencies | cn | 0.5.2 | MIT |
+| apps/web | dependencies | lucide-react | 1.50.0 | ISC |
+| apps/web | dependencies | react | 19.3.0 | MIT |
+| apps/web | dependencies | react-dom | 19.3.0 | MIT |
+| apps/web | dependencies | react-hook-form | 7.89.0 | MIT |
+| apps/web | dependencies | react-router-dom | 7.18.4 | MIT |
+| apps/web | dependencies | tw-animate-css | 1.4.0 | MIT |
+| apps/web | dependencies | zod | 4.6.7 | MIT |
+| apps/web | devDependencies | @playwright/test | 1.63.0 | Apache-2.0 |
+| apps/web | devDependencies | @tailwindcss/vite | 4.3.5 | MIT |
+| apps/web | devDependencies | @types/node | 24.19.1 | MIT |
+| apps/web | devDependencies | @types/react | 19.3.0 | MIT |
+| apps/web | devDependencies | @types/react-dom | 19.3.0 | MIT |
+| apps/web | devDependencies | @vitejs/plugin-react | 6.1.1 | MIT |
+| apps/web | devDependencies | shadcn | 4.23.0 | MIT |
+| apps/web | devDependencies | tailwindcss | 4.3.5 | MIT |
+| apps/web | devDependencies | typescript | 7.0.2 | Apache-2.0 |
+| apps/web | devDependencies | vite | 8.3.6 | MIT |
+| tools/contracts | dependencies | openapi-typescript | 7.13.0 | MIT |
+| tools/contracts | dependencies | typescript | 5.9.3 | Apache-2.0 |
+| tools/diagrams | dependencies | @viz-js/viz | 3.25.0 | MIT |
+| tools/diagrams | dependencies | sharp | 0.35.4 | Apache-2.0 |
+| tools/diagrams | dependencies | playwright | 1.62.1 | Apache-2.0 |
 
 Все npm-транзитивные пакеты включены в JSON. Лицензии BSD/MIT/Apache допускают использование при сохранении соответствующих уведомлений. При распространении артефактов сохранять LICENSE/NOTICE зависимостей и runtime; локальный реестр не заменяет их текстов.

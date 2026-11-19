@@ -1,0 +1,420 @@
+/* Onest Variable 5.3.1. The font license is in ../fonts/Onest-OFL.txt. */
+/* onest-cyrillic-ext-wght-normal */
+@font-face {
+  font-family: 'Onest Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/onest-cyrillic-ext-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+/* onest-cyrillic-wght-normal */
+@font-face {
+  font-family: 'Onest Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/onest-cyrillic-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* onest-latin-ext-wght-normal */
+@font-face {
+  font-family: 'Onest Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/onest-latin-ext-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* onest-latin-wght-normal */
+@font-face {
+  font-family: 'Onest Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/onest-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/* The sign-in form follows Neiroot's light Base Nova tokens. */
+body:has(#kc-form-login) {
+  --sign-in-background: #f6f7f8;
+  --sign-in-card: #ffffff;
+  --sign-in-foreground: #171a1f;
+  --sign-in-muted: #66706a;
+  --sign-in-hover: #f0f2f4;
+  --sign-in-accent: #e8f4ec;
+  --sign-in-accent-foreground: #235e38;
+  --sign-in-border: #e1e5e9;
+  --sign-in-input: #d7ddd9;
+  --sign-in-primary: #2f7d4a;
+  --sign-in-primary-text: #ffffff;
+  --sign-in-radius: 10px;
+  --font-family: "Onest Variable", Arial, sans-serif;
+  --pf-v5-global--FontFamily--text: var(--font-family);
+  background: var(--sign-in-background) !important;
+  color: var(--sign-in-foreground);
+  font: 14px/20px var(--font-family) !important;
+
+  & .pf-v5-c-login {
+    background: var(--sign-in-background) !important;
+    color: var(--sign-in-foreground);
+    font-family: inherit !important;
+    min-height: 100dvh;
+    padding: 80px 16px 24px !important;
+  }
+
+  & .pf-v5-c-login__container {
+    max-width: 384px !important;
+  }
+
+  & .pf-v5-c-login__main {
+    padding: 16px !important;
+    border: 1px solid var(--sign-in-border);
+    border-radius: 12px !important;
+    background: var(--sign-in-card) !important;
+    box-shadow: 0 1px 2px rgb(23 26 31 / 6%);
+  }
+
+  & #kc-header {
+    position: fixed;
+    inset: 0 0 auto;
+    margin: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 56px;
+    padding-inline: 12px;
+    border-bottom: 1px solid var(--sign-in-border);
+    background: var(--sign-in-card);
+
+    @media (min-width: 768px) {
+      padding-inline: 16px;
+    }
+  }
+
+  & #kc-header-wrapper {
+    flex: none;
+    height: 20px;
+    aspect-ratio: 381 / 67;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-indent: 100%;
+    white-space: nowrap;
+    background: url("../img/neiroot-wordmark.png?v=20261029-2") left center / contain no-repeat;
+  }
+
+  & .pf-v5-c-login__main-header > .pf-v5-c-login__main-header-utilities {
+    position: fixed;
+    inset: 12px 12px auto auto;
+    z-index: 41;
+
+    @media (min-width: 768px) {
+      inset-inline-end: 16px;
+    }
+  }
+
+  & .pf-v5-c-login__main-header {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    margin: 0 0 20px;
+  }
+
+  & #kc-page-title {
+    color: var(--sign-in-foreground);
+    text-align: center;
+    white-space: normal;
+    font: 600 24px/32px var(--font-family);
+    letter-spacing: -0.025em;
+  }
+
+  & #kc-form-login {
+    gap: 20px;
+  }
+
+  & #kc-form-login .pf-v5-c-form__group-label {
+    padding-block-end: 8px !important;
+  }
+
+  & #kc-form-login :is(.pf-v5-c-form__label, .pf-v5-c-form__label-text) {
+    display: block;
+
+    color: var(--sign-in-foreground);
+    font: 500 14px/20px var(--font-family) !important;
+  }
+
+  & #kc-form-login :is(.pf-v5-c-form-control, .pf-v5-c-input-group) {
+    border-color: var(--sign-in-input) !important;
+    border-radius: var(--sign-in-radius) !important;
+    background: var(--sign-in-card) !important;
+    min-height: 0 !important;
+    height: 40px;
+  }
+
+  & #kc-form-login .pf-v5-c-input-group .pf-v5-c-form-control {
+    height: 100%;
+  }
+
+  & #kc-form-login .pf-v5-c-form-control input {
+    height: 100%;
+    min-height: 0 !important;
+    padding: 0 12px !important;
+    border-radius: inherit !important;
+    color: var(--sign-in-foreground) !important;
+    font: 400 14px/20px var(--font-family);
+  }
+
+  & #kc-form-login .pf-v5-c-form-control input::placeholder {
+    color: var(--sign-in-muted) !important;
+  }
+
+  & #kc-form-login .pf-v5-c-form-control input:-webkit-autofill {
+    -webkit-text-fill-color: var(--sign-in-foreground) !important;
+  }
+
+  & #kc-form-login :is(.pf-v5-c-form-control, .pf-v5-c-input-group):focus-within {
+    border-color: var(--sign-in-primary) !important;
+    outline: 2px solid color-mix(in srgb, var(--sign-in-primary) 44%, transparent);
+    outline-offset: 1px;
+  }
+
+  & #kc-form-login :is(
+    .pf-v5-c-form-control.pf-m-error,
+    .pf-v5-c-form-control[aria-invalid="true"],
+    .pf-v5-c-form-control:has(> input[aria-invalid="true"]),
+    .pf-v5-c-input-group:has([aria-invalid="true"])
+  ) {
+    border-color: var(--color-control-error-border) !important;
+  }
+
+  & #kc-form-login .pf-v5-c-input-group [data-password-toggle] {
+    height: 100%;
+    min-height: 0;
+    width: 38px;
+    border-radius: 0 var(--sign-in-radius) var(--sign-in-radius) 0;
+    color: var(--sign-in-muted) !important;
+  }
+
+  & #kc-form-login .pf-v5-c-input-group [data-password-toggle]:hover {
+    background: var(--sign-in-hover) !important;
+  }
+
+  & #kc-form-login [data-password-toggle] svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  & #kc-form-login .pf-v5-c-form__group:has([id^="input-error-container-"] [id^="input-error-"]) + .pf-v5-c-form__group {
+    margin-top: 0;
+  }
+
+  & #kc-form-login .pf-v5-c-form__helper-text:not(:has(.pf-v5-c-helper-text__item)) {
+    margin-block: 0;
+  }
+
+  & #kc-form-login .pf-v5-c-form__actions {
+    margin: 0;
+    padding: 0 !important;
+  }
+
+  & #kc-login {
+    margin: 0;
+    min-height: 40px;
+    border-color: var(--sign-in-primary) !important;
+    border-radius: var(--sign-in-radius) !important;
+    background: var(--sign-in-primary) !important;
+    color: var(--sign-in-primary-text) !important;
+    font: 500 14px/20px var(--font-family) !important;
+  }
+
+  & #kc-login:hover {
+    background: color-mix(in srgb, var(--sign-in-primary) 90%, black) !important;
+  }
+
+  & #kc-login:disabled {
+    opacity: 0.65;
+  }
+
+  & :is(button, a):focus-visible {
+    outline: 2px solid var(--sign-in-primary);
+    outline-offset: 2px;
+  }
+
+  & #kc-info {
+    margin-top: 16px;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--sign-in-border);
+  }
+
+  & #kc-registration {
+    color: var(--sign-in-muted);
+  }
+
+  & #kc-registration a {
+    color: var(--sign-in-primary);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  & #kc-header .neiroot-language {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    /* Английский in Onest 14 px, plus padding and borders. */
+    width: 128px;
+    max-width: 55%;
+    margin-inline-start: auto;
+  }
+
+  & :is(.neiroot-language-trigger, .neiroot-language:has(> .pf-v5-c-form-control:not([hidden])))::after {
+    position: absolute;
+    inset-inline-end: 12px;
+    inset-block-start: 50%;
+    width: 7px;
+    height: 7px;
+    border: solid var(--sign-in-muted);
+    border-width: 0 1.5px 1.5px 0;
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+    content: "";
+  }
+
+  & .neiroot-language-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    padding: 0 34px 0 12px;
+    border: 1px solid var(--sign-in-input);
+    border-radius: var(--sign-in-radius);
+    background: var(--sign-in-card);
+    color: var(--sign-in-foreground);
+    font: 400 14px/20px var(--font-family);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  & .neiroot-language-trigger[aria-expanded="true"] {
+    opacity: 0;
+  }
+
+  & .neiroot-language-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .neiroot-language-popup {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: max-content;
+    min-width: 144px;
+    max-width: calc(100vw - 8px);
+    max-height: calc(100dvh - 8px);
+    padding: 4px;
+    overflow: auto;
+    border: 0;
+    border-radius: var(--sign-in-radius);
+    box-shadow: 0 0 0 1px rgb(23 26 31 / 10%), 0 4px 6px -1px rgb(23 26 31 / 16%);
+    background: var(--sign-in-card);
+    color: var(--sign-in-foreground);
+  }
+
+  & .neiroot-language-label {
+    padding: 4px 6px;
+    color: var(--sign-in-muted);
+    font: 400 12px/16px var(--font-family);
+  }
+
+  & .neiroot-language-popup [role="listbox"] {
+    display: grid;
+    gap: 1px;
+  }
+
+  & .neiroot-language-option {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 4px 32px 4px 6px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: 400 14px/20px var(--font-family);
+    text-align: start;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  & .neiroot-language-option:is(:hover, :focus) {
+    background: var(--sign-in-accent);
+    color: var(--sign-in-accent-foreground);
+    outline: none;
+  }
+
+  & .neiroot-language-option[aria-selected="true"]::after {
+    position: absolute;
+    inset-inline-end: 11px;
+    inset-block-start: 50%;
+    width: 11px;
+    height: 6px;
+    border: solid currentColor;
+    border-width: 0 0 1.5px 1.5px;
+    transform: translateY(-70%) rotate(-45deg);
+    content: "";
+  }
+
+  & .neiroot-language .pf-v5-c-form-control {
+    height: 32px;
+    min-height: 0 !important;
+    border-color: var(--sign-in-input) !important;
+    border-radius: var(--sign-in-radius) !important;
+  }
+
+  & .neiroot-language .pf-v5-c-form-control__utilities {
+    display: none;
+  }
+
+  & .neiroot-language .pf-v5-c-form-control:focus-within {
+    outline: none;
+  }
+
+  & #login-select-toggle {
+    height: 100%;
+    min-height: 0 !important;
+    padding-inline: 12px 28px;
+    appearance: none;
+    border-radius: inherit !important;
+    background: var(--sign-in-card) !important;
+    color: var(--sign-in-foreground) !important;
+    font: 500 14px/20px var(--font-family);
+    cursor: pointer;
+  }
+
+  & #login-select-toggle:hover {
+    background: var(--sign-in-hover) !important;
+  }
+
+  & #login-select-toggle:focus {
+    box-shadow: none !important;
+    outline: none;
+  }
+
+  & #login-select-toggle:focus-visible {
+    outline: 2px solid var(--sign-in-primary);
+    outline-offset: 2px;
+  }
+}

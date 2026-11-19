@@ -1,3 +1,7 @@
+import { initials, PersonCardHeader } from "@/shared/ui/person-card";
+import { TableColumnMenu, useTableColumns } from '@/shared/ui/table-column-menu';
+import { ListHeader } from '@/shared/ui/list-header';
+import { ListPagination } from '@/shared/ui/list-pagination';
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCreateAtom, useSelector } from "@tanstack/react-store";
@@ -14,8 +18,6 @@ import { z } from "zod";
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   CircleX,
   Copy,
   CheckCircle2,
@@ -23,7 +25,6 @@ import {
   EyeOff,
   Mail,
   Phone,
-  Search,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -68,13 +69,6 @@ import {
 } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
 import { Separator } from "@/shared/ui/separator";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -98,18 +92,6 @@ const tableFeatureSet = tableFeatures({ rowPaginationFeature });
 const column = createColumnHelper<typeof tableFeatureSet, Employee>();
 const emptyEmployees: Employee[] = [];
 
-
-function initials(fullName: string) {
-  return (
-    fullName
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "—"
-  );
-}
 
 function employeeAvatarImage(employee: Employee) {
   const name = [employee.lastName?.trim(), employee.firstName?.trim()]
@@ -226,7 +208,16 @@ const employeeColumns = column.columns([
   }),
 ]);
 
+const employeeToggleColumns = [
+  { id: "phone", label: "Телефон" },
+  { id: "role", label: "Роль" },
+  { id: "access", label: "Подключение" },
+];
+
 export function Employees({ tenant }: { tenant: Tenant }) {
+  const columnSettings = useTableColumns("employees");
+  const isColumnVisible = (id: string) =>
+    !employeeToggleColumns.some(column => column.id === id && columnSettings.hidden.includes(id));
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const paginationAtom = useCreateAtom<PaginationState>({
@@ -295,15 +286,15 @@ export function Employees({ tenant }: { tenant: Tenant }) {
   const columns = (
     <colgroup>
       <col />
-      <col className="w-[22%]" />
-      <col className="w-[16%]" />
-      <col className="w-[22%]" />
+      {isColumnVisible("phone") && <col className="w-[22%]" />}
+      {isColumnVisible("role") && <col className="w-[16%]" />}
+      {isColumnVisible("access") && <col className="w-[22%]" />}
       <col className="w-12" />
     </colgroup>
   );
   const headings = (hidden = false) => table.getHeaderGroups().map((group) => (
     <TableRow key={group.id}>
-      {group.headers.map((header) => (
+      {group.headers.filter(header => isColumnVisible(header.column.id)).map((header) => (
         <TableHead key={header.id} className={header.id === "open" ? "text-right" : ""}>
           {header.isPlaceholder ? null : <span className={hidden ? "sr-only" : undefined}><table.FlexRender header={header} /></span>}
         </TableHead>
@@ -333,28 +324,13 @@ export function Employees({ tenant }: { tenant: Tenant }) {
           </Link>
         )}
       </div>
-      <Card className="overflow-visible pt-0 md:gap-0">
-        <div className="sticky top-0 z-20 rounded-t-xl bg-card pt-4">
-        <CardHeader className="grid-cols-1 border-b sm:grid-cols-[1fr_auto]">
-          <CardTitle>Список сотрудников</CardTitle>
-          <CardDescription>
-            {total
-              ? `Всего сотрудников: ${total}`
-              : "Поиск и управление командой"}
-          </CardDescription>
-          <CardAction className="col-start-1 row-span-1 row-start-3 w-full pt-3 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:w-80 sm:pt-0">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                aria-label="Поиск сотрудников"
-                placeholder="ФИО, email или телефон"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </div>
-          </CardAction>
-        </CardHeader>
+      <Card size="sm" className="gap-0 overflow-visible pt-0">
+        <div className="sticky top-0 z-20 rounded-t-xl bg-card pt-(--card-spacing)">
+        <ListHeader title="Список сотрудников"
+          description={total ? `Всего сотрудников: ${total}` : "Поиск и управление командой"}
+          search={search} searchLabel="Поиск сотрудников" placeholder="ФИО, email или телефон"
+          onSearchChange={setSearch}
+          tableActions={<div className="hidden md:block"><TableColumnMenu columns={employeeToggleColumns} {...columnSettings} /></div>} />
         {items.length > 0 && (
           <div ref={headerScroll} onScroll={(event) => {
             if (bodyScroll.current) bodyScroll.current.scrollLeft = event.currentTarget.scrollLeft;
@@ -383,7 +359,7 @@ export function Employees({ tenant }: { tenant: Tenant }) {
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
                       <TableRow key={row.id} className="h-12">
-                        {row.getAllCells().map((cell) => (
+                        {row.getAllCells().filter(cell => isColumnVisible(cell.column.id)).map((cell) => (
                           <TableCell
                             key={cell.id}
                             className={cn("py-1.5", cell.column.id === "open" && "text-right")}
@@ -396,7 +372,7 @@ export function Employees({ tenant }: { tenant: Tenant }) {
                   </TableBody>
                 </Table>
               </div>
-              <div className="grid gap-3 p-4 md:hidden">
+              <div className="grid gap-3 p-(--card-spacing) md:hidden">
                 {items.map((employee) => (
                   <MobileEmployee key={employee.id} employee={employee} />
                 ))}
@@ -405,53 +381,15 @@ export function Employees({ tenant }: { tenant: Tenant }) {
           )}
         </CardContent>
         {result.data && result.data.items.length > 0 && (
-          <CardFooter className="flex flex-col gap-3 bg-muted/25 sm:flex-row sm:justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Показывать</span>
-              <Select
-                value={String(pagination.pageSize)}
-                onValueChange={(value) => table.setPageSize(Number(value))}
-              >
-                <SelectTrigger
-                  size="sm"
-                  aria-label="Количество сотрудников на странице"
-                  className="w-20"
-                >
-                  <SelectValue>{pagination.pageSize}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 25, 50].map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Страница {pagination.pageIndex + 1} из {Math.max(1, pageCount)}
-              </span>
-              <EmployeeTooltip label={"Предыдущая страница"}><Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Предыдущая страница"
-                disabled={!table.getCanPreviousPage() || result.isFetching}
-                onClick={() => changePage(pagination.pageIndex - 1)}
-              >
-                <ChevronLeft />
-              </Button></EmployeeTooltip>
-              <EmployeeTooltip label={"Следующая страница"}><Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Следующая страница"
-                disabled={!table.getCanNextPage() || result.isFetching}
-                onClick={() => changePage(pagination.pageIndex + 1)}
-              >
-                <ChevronRight />
-              </Button></EmployeeTooltip>
-            </div>
-          </CardFooter>
+          <ListPagination
+            pageIndex={pagination.pageIndex}
+            pageSize={pagination.pageSize}
+            pageCount={pageCount}
+            fetching={result.isFetching}
+            pageSizeLabel="Количество сотрудников на странице"
+            onPageChange={changePage}
+            onPageSizeChange={size => table.setPageSize(size)}
+          />
         )}
       </Card>
     </section>
@@ -1112,24 +1050,18 @@ export function EmployeeCard({
         Список сотрудников
       </Link>
       <div className="space-y-5">
-        <Card className="gap-2">
-          <CardHeader>
-            <div className="flex items-start gap-3 sm:items-center">
-              <EmployeeAvatarEditor key={employee.id} initialImage={employeeAvatarImage(employee) ? demoProfileAvatarSrc : undefined} fallback={
-                <Avatar size="lg" aria-hidden="true"><AvatarFallback className="bg-primary/10 text-primary">{initials(employee.fullName)}</AvatarFallback></Avatar>
-              } />
-              <div className="min-w-0 space-y-2">
-                <h1 className="text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] md:text-3xl">
-                  {employee.fullName}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2">
-                  <RoleBadge role={employee.role} />
-                  <AccessState employee={employee} />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        <PersonCardHeader name={employee.fullName} avatar={
+          <EmployeeAvatarEditor
+            key={employee.id}
+            initialImage={employeeAvatarImage(employee) ? demoProfileAvatarSrc : undefined}
+            fallback={<Avatar size="lg" aria-hidden="true"><AvatarFallback className="bg-primary/10 text-primary">{initials(employee.fullName)}</AvatarFallback></Avatar>}
+          />
+        }>
+          <div className="flex flex-wrap items-center gap-2">
+            <RoleBadge role={employee.role} />
+            <AccessState employee={employee} />
+          </div>
+        </PersonCardHeader>
         <EmployeePersonalData key={employee.id} employee={employee}
           roleDirty={canManage(tenant.role) && employee.role !== "owner" && role !== employee.role}
           saving={roleMutation.isPending}

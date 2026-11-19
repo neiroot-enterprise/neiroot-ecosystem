@@ -214,6 +214,10 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
       path: "test-results/department-tree-mobile.png",
       fullPage: true,
     });
+    await page.getByRole("button", { name: "Включить тёмную тему" }).click();
+    await page.waitForTimeout(300); // Let theme color transitions settle before visual inspection.
+    await page.screenshot({path:"test-results/enterprise-tree-dark-mobile.png",fullPage:true});
+    await page.getByRole("button", { name: "Включить светлую тему" }).click();
     await page.setViewportSize({ width: 1440, height: 1200 });
     await row("Разработка")
       .getByRole("button", { name: "Свернуть Разработка", exact: true })
@@ -238,7 +242,8 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
       .click();
     await page
       .getByRole("combobox", { name: /Состояние/ })
-      .selectOption("archived");
+      .click();
+    await page.getByRole("option", { name: "Архив", exact: true }).click();
     await expect(row(leafName).locator(".department-parent-path")).toHaveText(
       "В составе: Дирекция / Разработка",
     );
@@ -249,7 +254,8 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
       path: "test-results/department-tree-archive.png",
       fullPage: true,
     });
-    await page.getByRole("combobox", { name: /Состояние/ }).selectOption("all");
+    await page.getByRole("combobox", { name: /Состояние/ }).click();
+    await page.getByRole("option", { name: "Все", exact: true }).click();
     await expect(row(leafName)).toHaveCount(0);
     await row("Дирекция")
       .getByRole("button", { name: "Развернуть Дирекция", exact: true })
@@ -510,8 +516,8 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
       fullPage: true,
     });
     await page.setViewportSize({ width: 390, height: 844 });
-    expect(
-      await page.evaluate(
+    await expect.poll(
+      () => page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
@@ -635,7 +641,7 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
       .click();
     await expect(editor).toHaveCount(0);
     await expect(
-      assignmentPanel.getByText("Назначений пока нет", { exact: true }),
+      assignmentPanel.getByText("Сотрудник не назначен ни в одно предприятие.", { exact: true }),
     ).toBeVisible();
     expect(
       (await (await call(page, assignmentPath + "?status=all")).json()).items,
@@ -884,8 +890,8 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
     ).toBeFocused();
     await page.keyboard.press("Escape");
     await page.setViewportSize({ width: 390, height: 844 });
-    expect(
-      await page.evaluate(
+    await expect.poll(
+      () => page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);

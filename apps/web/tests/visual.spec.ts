@@ -154,10 +154,16 @@ test("desktop shell, expanded and collapsed Sidebar, placeholders", async ({
     fullPage: true,
   });
   await profileMenu.getByRole("menuitem", { name: "Профиль", exact: true }).click();
-  const profilePlaceholder = page.getByRole("dialog", { name: "Профиль" });
-  await expect(profilePlaceholder).toContainText("Раздел в разработке.");
-  await profilePlaceholder.getByRole("button", { name: "Закрыть" }).click();
-  await expect(profile).toBeFocused();
+  await expect(page).toHaveURL(/\/account\/profile$/);
+  await expect(page.getByRole("region", { name: "Профиль", exact: true }).getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("main").getByText("owner@example.test", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Тестов Алексей Петрович", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Сотрудники", exact: true })).not.toHaveAttribute("aria-current", "page");
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Профиль", exact: true }).getByRole("heading", { level: 1 })).toBeVisible();
+  await page.screenshot({ path: "test-results/account-profile.png" });
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Сотрудники", exact: true })).toBeVisible();
   await page.screenshot({
     path: "test-results/employees-desktop-light.png",
     fullPage: true,
@@ -224,6 +230,12 @@ test("dark theme is saved and restored", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("neiroot-theme"))).toBe(
     "dark",
   );
+  await page.goto("/account/profile");
+  await expect(page.getByRole("region", { name: "Профиль", exact: true }).getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.goto("/account/notifications");
+  await expect(page.getByRole("heading", { name: "Уведомления", exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveClass(/dark/);
 });
 
 test("form validates input and preserves fields on API refusal", async ({
@@ -373,6 +385,58 @@ test("user cannot create or change access, employee card is readable", async ({
   }
 });
 
+test("account profile matches the employee card layout in both themes", async ({ page }) => {
+  await fixture(page);
+  await page.goto("/account/profile");
+
+  const geometry = async () => {
+    const heading = page.getByRole("heading", { level: 1 });
+    const header = heading.locator('xpath=ancestor::*[@data-slot="card"]');
+    const personal = page.getByRole("region", { name: "Личные данные", exact: true });
+    await expect(personal).toBeVisible();
+    const headerStyle = await header.evaluate(card => {
+      const name = card.querySelector("h1")!;
+      const avatar = card.querySelector('[data-slot="avatar"], button')!;
+      return {
+        width: card.getBoundingClientRect().width,
+        nameSize: getComputedStyle(name).fontSize,
+        nameWeight: getComputedStyle(name).fontWeight,
+        avatarSize: avatar.getBoundingClientRect().width,
+      };
+    });
+    const personalStyle = await personal.evaluate(card => {
+      const content = card.querySelector('[data-slot="card-content"]')!;
+      const field = Array.from(content.querySelectorAll("dt"))
+        .find(term => term.textContent === "Email")!;
+      const value = field.nextElementSibling!.firstElementChild!;
+      return {
+        width: card.getBoundingClientRect().width,
+        columns: getComputedStyle(content).gridTemplateColumns,
+        inset: getComputedStyle(content).paddingInlineStart,
+        rowGap: getComputedStyle(content.firstElementChild!.children[1]).marginBlockStart,
+        headingSize: getComputedStyle(card.querySelector("h2")!).fontSize,
+        labelSize: getComputedStyle(field).fontSize,
+        valueSize: getComputedStyle(value).fontSize,
+        valueHeight: value.getBoundingClientRect().height,
+      };
+    });
+    return { headerStyle, personalStyle };
+  };
+
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ["light", "dark"]) {
+      await page.evaluate(theme => localStorage.setItem("neiroot-theme", theme), theme);
+      await page.goto(`/company/employees/${employee.id}`);
+      const reference = await geometry();
+      await page.goto("/account/profile");
+      expect(await geometry()).toEqual(reference);
+      await expect(page.getByText("owner@example.test", { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
+  }
+});
+
 test("inline personal data preview keeps the card and all five fields in place", async ({ page }) => {
   await fixture(page);
   await page.goto(`/company/employees/${employee.id}`);
@@ -452,18 +516,12 @@ test("390 px mobile cards and keyboard drawer have no horizontal overflow", asyn
   await page.getByRole("button", { name: "Меню профиля" }).click();
   const mobileProfileMenu = page.getByRole("menu");
   await expect(mobileProfileMenu).toHaveAttribute("data-side", "top");
-  await mobileProfileMenu.getByRole("menuitem", { name: "Уведомление" }).click();
-  const notificationPlaceholder = page.getByRole("dialog", { name: "Уведомление" });
-  await expect(notificationPlaceholder).toContainText("Раздел в разработке.");
-  await notificationPlaceholder.getByRole("button", { name: "Закрыть" }).click();
-  await expect(notificationPlaceholder).toHaveCount(0);
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Главное меню" })).toHaveCount(
-    0,
-  );
-  await expect(
-    page.getByRole("button", { name: "Открыть меню" }),
-  ).toBeFocused();
+  await mobileProfileMenu.getByRole("menuitem", { name: "Уведомления", exact: true }).click();
+  await expect(page).toHaveURL(/\/account\/notifications$/);
+  await expect(page.getByRole("heading", { name: "Уведомления", exact: true })).toBeVisible();
+  await expect(page.getByText("Лента уведомлений пока недоступна.")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Главное меню" })).toHaveCount(0);
+  await page.screenshot({ path: "test-results/account-notifications-mobile.png", animations: "disabled" });
   const ecosystem = page.getByRole("combobox", {
     name: "Экосистема",
     exact: true,
@@ -554,6 +612,93 @@ test("employee avatar can be previewed, saved and removed", async ({ page }) => 
   await dialog.getByRole("button", { name: "Удалить фото" }).click();
   await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
   await expect(page.getByRole("button", { name: "Изменить фото сотрудника" }).locator("img")).toHaveCount(0);
+});
+
+test("column settings toggle table fields, preserve label spacing and survive reload", async ({ page }) => {
+  await fixture(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.route(/\/api\/v1\/tenants\/[^/]+\/(businesses|organizations)\?/, route => route.fulfill({
+    json: { items: [{ id: 'demo', name: 'Пример', inn: '9900001010', archived: false }], total: 1, limit: 25, offset: 0 },
+  }));
+
+  for (const [section, label] of [['employees', 'Телефон'], ['businesses', 'Состояние'], ['organizations', 'ИНН']]) {
+    await page.goto(`/company/${section}`);
+    const settings = page.getByRole('button', { name: 'Настроить столбцы' });
+    const checkbox = page.getByRole('menuitemcheckbox', { name: label, exact: true });
+    const table = page.getByRole('table');
+    await expect(table.locator('tbody tr').first()).toBeVisible();
+    const columnCount = await table.locator('tbody tr').first().locator('td').count();
+    await expect(settings).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await settings.hover();
+    await expect(settings).toHaveCSS('background-color', 'rgb(240, 242, 244)');
+
+    await settings.focus();
+    await page.keyboard.press('Enter');
+    await expect(checkbox).toHaveAttribute('aria-checked', 'true');
+    const longest = page.getByRole('menuitemcheckbox', {
+      name: section === 'employees' ? 'Подключение' : 'Состояние',
+      exact: true,
+    });
+    await expect.poll(() => longest.evaluate(item => {
+      const indicator = item.querySelector<HTMLElement>('[data-slot="dropdown-menu-checkbox-item-indicator"]')!;
+      const label = item.lastElementChild as HTMLElement;
+      return indicator.offsetLeft - label.offsetLeft - label.offsetWidth;
+    })).toBeGreaterThanOrEqual(8);
+    await checkbox.click();
+    await expect(checkbox).toHaveAttribute('aria-checked', 'false');
+    await expect(table.locator('tbody tr').first().locator('td')).toHaveCount(columnCount - 1);
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeFocused();
+    await page.reload();
+    await settings.click();
+    await expect(checkbox).toHaveAttribute('aria-checked', 'false');
+    await expect(page.getByRole('menuitem', { name: 'Восстановить по умолчанию' })).toHaveCount(0);
+    const menu = page.getByRole('menu');
+    const labelElement = menu.locator('[data-slot="dropdown-menu-label"]');
+    await expect(labelElement).toHaveCSS('padding-top', '4px');
+    await expect(labelElement).toHaveCSS('padding-bottom', '4px');
+    expect(await menu.locator('[data-slot="dropdown-menu-separator"]').count()).toBe(1);
+    await checkbox.click();
+    await expect(table.locator('tbody tr').first().locator('td')).toHaveCount(columnCount);
+  }
+});
+
+test("employee list uses the compact header with a responsive search field", async ({ page }) => {
+  await fixture(page);
+  await page.goto("/company/employees");
+  const search = page.getByRole("textbox", { name: "Поиск сотрудников", exact: true });
+  const header = page.locator('[data-slot="card-header"]').filter({ has: search });
+  const card = page.locator('[data-employee-list] > [data-slot="card"]');
+  const footer = card.locator(':scope > [data-slot="card-footer"]');
+  await expect(card).toHaveAttribute("data-size", "sm");
+  await expect(footer).toHaveCSS("padding-top", "12px");
+  for (const width of [1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => document.documentElement.classList.toggle("dark", dark), dark);
+      await expect(header).toHaveCSS("padding-bottom", "12px");
+      const title = header.locator('[data-slot="card-title"]');
+      await expect(title).toHaveCSS("font-size", "14px");
+      const titleBox = (await title.boundingBox())!;
+      const description = (await header.locator('[data-slot="card-description"]').boundingBox())!;
+      const field = (await search.boundingBox())!;
+      const bounds = (await card.boundingBox())!;
+      expect(titleBox.y - bounds.y).toBe(12);
+      expect(titleBox.x - bounds.x).toBe(12);
+      const settings = await header.locator('button[aria-label="Настроить столбцы"]').boundingBox();
+      const rightmost = settings ?? field;
+      expect(Math.round(bounds.x + bounds.width - rightmost.x - rightmost.width)).toBe(12);
+      expect(field.height).toBe(32);
+      if (width >= 640) {
+        expect(field.width).toBe(320);
+        const headingCenter = (titleBox.y + description.y + description.height) / 2;
+        expect(Math.abs(field.y + field.height / 2 - headingCenter)).toBeLessThanOrEqual(1);
+      } else {
+        expect(field.x).toBe(titleBox.x);
+        expect(field.y).toBeGreaterThan(description.y + description.height);
+      }
+    }
+  }
 });
 
 test("employee pagination restores scroll when returning from a shorter page", async ({ page }) => {
@@ -700,4 +845,285 @@ test("employee search keeps horizontal layout when the page scrollbar disappears
   await search.clear();
   await expect(page.locator("tbody tr")).toHaveCount(25);
   expect(await geometry()).toEqual(before);
+});
+
+for (const catalog of [
+  {kind:'businesses', singular:'предприятие', plural:'предприятий'},
+  {kind:'organizations', singular:'организацию', plural:'организаций'},
+]) test(`${catalog.kind} design: themes, narrow list, errors and protected draft`, async ({page}) => {
+  await fixture(page);
+  let fail = false;
+  await page.route(`**/api/v1/tenants/*/${catalog.kind}?*`, async route => {
+    if (fail) return route.fulfill({status:503,json:{message:'Предприятия временно недоступны'}});
+    const search = new URL(route.request().url()).searchParams.get('search');
+    await route.fulfill({json:{items:search ? [] : [{id:'enterprise-demo',name:'Производство и обслуживание оборудования',inn:'9900001010',archived:false}], total:search?0:1,limit:25,offset:0}});
+  });
+  const appearance = (element: HTMLElement | SVGElement) => {
+    const style = getComputedStyle(element);
+    const icon = element.querySelector('svg')!;
+    return {
+      height: element.getBoundingClientRect().height,
+      fontSize: style.fontSize, fontWeight: style.fontWeight, lineHeight: style.lineHeight,
+      paddingLeft: style.paddingLeft, paddingRight: style.paddingRight,
+      gap: style.gap, borderRadius: style.borderRadius,
+      iconWidth: icon.getBoundingClientRect().width, iconHeight: icon.getBoundingClientRect().height,
+    };
+  };
+  for (const width of [1280,390]) {
+    await page.setViewportSize({width,height:900});
+    await page.goto('/company/employees');
+    const reference = await page.getByRole('link',{name:'Добавить сотрудника',exact:true}).first().evaluate(appearance);
+    await page.goto(`/company/${catalog.kind}`);
+    const actual = await page.getByRole('button',{name:`Добавить ${catalog.singular}`,exact:true}).evaluate(appearance);
+    expect(actual.height).toBe(40);
+    expect(actual).toEqual(reference);
+  }
+  await expect(page.getByRole('link',{name:'Производство и обслуживание оборудования',exact:true})).toBeVisible();
+  for (const width of [1280,768,390]) {
+    await page.setViewportSize({width,height:900});
+    for (const dark of [false,true]) {
+      await page.evaluate(dark=>document.documentElement.classList.toggle('dark',dark),dark);
+      await page.waitForTimeout(300); // Capture settled theme colors.
+      await expect(page.getByRole('textbox',{name:`Поиск ${catalog.plural}`,exact:true})).toHaveCSS('height','32px');
+      {
+        const toolbar=page.getByRole('group',{name:'Поиск и фильтры',exact:true});
+        const card=page.locator('[data-slot="card"]').filter({has:toolbar});
+        await expect(card).toHaveAttribute('data-size','sm');
+        expect(await card.evaluate(element=>{
+          const header=element.querySelector('[data-slot="card-header"]')!;
+          const title=header.querySelector('[data-slot="card-title"]')!;
+          return {top:title.getBoundingClientRect().top-element.getBoundingClientRect().top,bottom:parseFloat(getComputedStyle(header).paddingBottom),left:parseFloat(getComputedStyle(header).paddingLeft),footer:parseFloat(getComputedStyle(element.querySelector('[data-slot="card-footer"]')!).paddingTop)};
+        })).toEqual({top:12,bottom:12,left:12,footer:12});
+
+        const searchBox=await toolbar.getByRole('textbox').boundingBox();
+        const filterBox=await toolbar.getByRole('combobox',{name:'Состояние'}).boundingBox();
+        if(width>=640) {
+          expect(searchBox!.y).toBe(filterBox!.y);
+          const header=toolbar.locator('xpath=ancestor::*[@data-slot="card-header"]');
+          const headerBox=await header.boundingBox();
+          const settingsBox = (await toolbar.getByRole('button', {name:'Настроить столбцы'}).boundingBox())!;
+          expect(Math.round(headerBox!.x+headerBox!.width-settingsBox.x-settingsBox.width)).toBe(12);
+          expect(settingsBox.x-filterBox!.x-filterBox!.width).toBe(8);
+          if(width>=1024) {
+            const titleBox=await header.locator('[data-slot="card-title"]').boundingBox();
+            const descriptionBox=await header.locator('[data-slot="card-description"]').boundingBox();
+            const headingCenter=(titleBox!.y+descriptionBox!.y+descriptionBox!.height)/2;
+            expect(Math.abs(searchBox!.y+searchBox!.height/2-headingCenter)).toBeLessThanOrEqual(1);
+          }
+        }
+        else expect(filterBox!.y-searchBox!.y-searchBox!.height).toBe(8);
+      }
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      await page.screenshot({path:`test-results/${catalog.kind}-${width}-${dark?'dark':'light'}.png`,fullPage:true});
+      {
+        const state=page.getByRole('combobox',{name:'Состояние',exact:true});
+        expect((await state.boundingBox())!.height).toBe(32);
+        const stateWidth=(await state.boundingBox())!.width;
+        expect(stateWidth).toBeLessThan(192);
+        await state.focus();
+        await page.keyboard.press('Space');
+        const popup=page.locator('[data-slot="select-content"]');
+        await expect(popup).toBeVisible();
+        await expect(popup).toHaveAttribute('data-align-trigger','true');
+        await expect(state).toHaveCSS('opacity','0');
+        await expect(popup.locator('[data-slot="select-label"]')).toHaveText('Состояние');
+        await page.screenshot({path:`test-results/${catalog.kind}-select-${width}-${dark?'dark':'light'}.png`,fullPage:true});
+        await page.keyboard.press('Escape');
+        await expect(state).toBeFocused();
+        await expect(state).toHaveCSS('opacity','1');
+        if(width===1280&&!dark) {
+          for(const label of ['Архив','Все','Действующие']) {
+            await state.click();
+            await page.getByRole('option',{name:label,exact:true}).click();
+            await expect(state.locator('[data-slot="select-value"]')).toHaveText(label);
+            expect((await state.boundingBox())!.width).toBe(stateWidth);
+          }
+        }
+
+      }
+      if (catalog.kind==='businesses') {
+        const listTab=page.getByRole('tab',{name:'Список предприятий',exact:true});
+        const departmentsTab=page.getByRole('tab',{name:'Отделы',exact:true});
+        const tabSpacing=()=>page.locator('nav[data-slot="tabs"]').evaluate(element=>{
+          const bounds=element.getBoundingClientRect();
+          return {
+            above:bounds.top-element.previousElementSibling!.getBoundingClientRect().bottom,
+            below:element.nextElementSibling!.getBoundingClientRect().top-bounds.bottom,
+          };
+        });
+        expect(await tabSpacing()).toEqual({above:8,below:8});
+        await expect(listTab).toHaveAttribute('aria-selected','true');
+        await listTab.focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(departmentsTab).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(page).toHaveURL(/\/company\/businesses\/departments$/);
+        await expect(departmentsTab).toHaveAttribute('aria-selected','true');
+        expect(await tabSpacing()).toEqual({above:8,below:8});
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        await page.screenshot({path:`test-results/departments-tabs-${width}-${dark?'dark':'light'}.png`,fullPage:true});
+        await listTab.click();
+        await expect(page).toHaveURL(/\/company\/businesses$/);
+        await expect(listTab).toHaveAttribute('aria-selected','true');
+      }
+    }
+  }
+  await page.getByRole('button',{name:`Добавить ${catalog.singular}`}).focus();
+  await page.keyboard.press('Enter');
+  const dialog=page.getByRole('dialog');
+  await dialog.getByLabel('Наименование').fill('Черновик предприятия');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await page.getByRole('button',{name:'Продолжить редактирование'}).click();
+  await expect(dialog.getByLabel('Наименование')).toHaveValue('Черновик предприятия');
+  await dialog.getByRole('button',{name:'Отмена',exact:true}).click();
+  await page.getByRole('button',{name:'Отменить',exact:true}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button',{name:`Добавить ${catalog.singular}`})).toBeFocused();
+  await page.getByRole('textbox',{name:`Поиск ${catalog.plural}`,exact:true}).fill('Нет такого предприятия');
+  await expect(page.getByText('Ничего не найдено',{exact:true})).toBeVisible();
+  fail=true;
+  await page.getByRole('textbox',{name:`Поиск ${catalog.plural}`,exact:true}).fill('Ошибка');
+  await expect(page.getByRole('button',{name:'Повторить',exact:true})).toBeVisible();
+  fail=false;
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await expect(page.getByText('Ничего не найдено',{exact:true})).toBeVisible();
+});
+
+for (const kind of ['organizations','businesses']) test(`${kind}: pagination keeps footer visible on return`, async ({page}) => {
+  await fixture(page);
+  await page.route(`**/api/v1/tenants/*/${kind}?*`, async route => {
+    const params=new URL(route.request().url()).searchParams;
+    const limit=Number(params.get('limit')),offset=Number(params.get('offset'));
+    await new Promise(resolve=>setTimeout(resolve,150));
+    const items=Array.from({length:15},(_,i)=>({id:`item-${i}`,name:`Организация с длинным наименованием для проверки переноса строк ${i}`,inn:'9900001010',archived:false}));
+    await route.fulfill({json:{items:items.slice(offset,offset+limit),total:15,limit,offset}});
+  });
+  await page.setViewportSize({width:390,height:650});
+  await page.goto(`/company/${kind}`);
+  await expect(page.getByText('Страница 1 из 1',{exact:true})).toBeVisible();
+  const state=page.getByRole('combobox',{name:'Состояние',exact:true});
+  await state.click();
+  const popup=page.locator('[data-slot="select-content"]');
+  await expect(popup).toBeVisible();
+  {
+    await expect(popup).toHaveAttribute('data-align-trigger','true');
+    expect((await state.boundingBox())!.height).toBe(32);
+    await expect(popup.locator('[data-slot="select-group"]')).toBeVisible();
+  }
+  await page.keyboard.press('Escape');
+  await expect(state).toBeFocused();
+  await page.getByRole('combobox').last().click();
+  await page.getByRole('option',{name:'10',exact:true}).click();
+  await expect(page.getByText('Страница 1 из 2',{exact:true})).toBeVisible();
+  const next=page.getByRole('button',{name:'Следующая страница',exact:true});
+  const previous=page.getByRole('button',{name:'Предыдущая страница',exact:true});
+  await next.click();
+  await expect(page.getByText('Страница 2 из 2',{exact:true})).toBeVisible();
+  await expect(previous).toBeEnabled();
+  await previous.click();
+  await expect(next).toBeEnabled();
+  await expect(page.getByText('Страница 1 из 2',{exact:true})).toBeVisible();
+  await expect.poll(()=>next.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight})).toBe(true);
+});
+
+test('shared list pagination: enterprise requests, filters and compact catalog appearance', async ({page}) => {
+  await fixture(page);
+  await page.route('**/api/v1/tenants/*/organizations?*', route => route.fulfill({
+    json: { items: [{ id: 'org-demo', name: 'Организация', inn: '9900001010', archived: false }], total: 1, limit: 25, offset: 0 },
+  }));
+  const requests: {limit:number;offset:number;search:string;status:string}[]=[];
+  let delayNext=false;
+  await page.route('**/api/v1/tenants/*/businesses?*', async route => {
+    const params=new URL(route.request().url()).searchParams;
+    const limit=Number(params.get('limit')),offset=Number(params.get('offset'));
+    const search=params.get('search')||'',status=params.get('status')||'active';
+    requests.push({limit,offset,search,status});
+    if(delayNext){delayNext=false;await new Promise(resolve=>setTimeout(resolve,700));}
+    const all=Array.from({length:61},(_,index)=>({id:`business-${index}`,name:`Предприятие ${index+1}`,archived:status==='archived'}));
+    const filtered=search?all.filter(item=>item.name===search):all;
+    await route.fulfill({json:{items:filtered.slice(offset,offset+limit),total:filtered.length,limit,offset}});
+  });
+  const footer=page.locator('[data-slot="card-footer"]').filter({has:page.getByRole('button',{name:'Следующая страница',exact:true})});
+  const appearance=(element:HTMLElement|SVGElement)=>{
+    const style=getComputedStyle(element);
+    const button=element.querySelector('button[aria-label="Следующая страница"]')!;
+    const buttonStyle=getComputedStyle(button);
+    return {padding:style.padding,background:style.backgroundColor,border:style.borderTopWidth,
+      direction:style.flexDirection,gap:style.gap,font:buttonStyle.fontSize,
+      buttonHeight:button.getBoundingClientRect().height,radius:buttonStyle.borderRadius};
+  };
+  await page.goto('/company/organizations');
+  for(const width of [1280,390]) {
+    await page.setViewportSize({width,height:900});
+    for(const theme of ['light','dark']) {
+      await page.evaluate(theme=>localStorage.setItem('neiroot-theme',theme),theme);
+      await page.goto('/company/organizations');
+      await expect(footer).toBeVisible();
+      const reference=await footer.evaluate(appearance);
+      const headerAppearance=(element:HTMLElement|SVGElement)=>{
+        const card=element.closest('[data-slot="card"]')!.getBoundingClientRect();
+        const bounds=element.getBoundingClientRect();
+        const input=element.querySelector('input')!;
+        const field=input.getBoundingClientRect(),style=getComputedStyle(input);
+        const title=getComputedStyle(element.querySelector('[data-slot="card-title"]')!);
+        return {left:bounds.left-card.left,right:card.right-bounds.right,
+          inputWidth:field.width,inputHeight:field.height,rightInset:card.right-field.right,
+          inputPadding:style.paddingLeft,titleFont:title.fontSize,titleWeight:title.fontWeight,
+          border:getComputedStyle(element).borderBottomWidth};
+      };
+      const referenceHeader=await page.locator('[data-slot="card-header"]').filter({has:page.getByRole('textbox',{name:'Поиск организаций',exact:true})}).evaluate(headerAppearance);
+      await page.goto('/company/businesses');
+      await expect(footer).toBeVisible();
+      expect(await footer.evaluate(appearance)).toEqual(reference);
+      const enterpriseHeader=page.locator('[data-slot="card-header"]').filter({has:page.getByRole('textbox',{name:'Поиск предприятий',exact:true})});
+      expect(referenceHeader.inputHeight).toBe(32);
+      expect(await enterpriseHeader.evaluate(headerAppearance)).toEqual(referenceHeader);
+      const tableEdges=await page.getByRole('table').evaluate(element=>{
+        const card=element.closest('[data-slot="card"]')!.getBoundingClientRect();
+        return [...element.querySelectorAll('tr')].every(row=>{
+          const bounds=row.getBoundingClientRect();
+          return Math.abs(bounds.left-card.left)<1&&Math.abs(bounds.right-card.right)<1;
+        });
+      });
+      expect(tableEdges).toBe(true);
+      const edges=await footer.evaluate(element=>{
+        const card=element.closest('[data-slot="card"]')!.getBoundingClientRect(),bounds=element.getBoundingClientRect();
+        return {left:Math.abs(card.left-bounds.left),right:Math.abs(card.right-bounds.right),bottom:Math.abs(card.bottom-bounds.bottom)};
+      });
+      expect(edges.left).toBeLessThan(1);
+      expect(edges.right).toBeLessThan(1);
+      expect(edges.bottom).toBeLessThan(1);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      await footer.screenshot({path:`test-results/pagination-${width}-${theme}.png`});
+    }
+  }
+  await expect(page.getByText('Страница 1 из 3',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Предыдущая страница',exact:true})).toBeDisabled();
+  delayNext=true;
+  await page.getByRole('button',{name:'Следующая страница',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Следующая страница',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Предыдущая страница',exact:true})).toBeDisabled();
+  await expect(page.getByRole('link',{name:'Предприятие 1',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Предприятие 26',exact:true})).toBeVisible();
+  expect(requests.at(-1)).toMatchObject({limit:25,offset:25});
+  await page.getByRole('combobox',{name:'Количество предприятий на странице'}).click();
+  await page.getByRole('option',{name:'10',exact:true}).click();
+  await expect(page.getByText('Страница 1 из 7',{exact:true})).toBeVisible();
+  expect(requests.at(-1)).toMatchObject({limit:10,offset:0});
+  await page.getByRole('combobox',{name:'Количество предприятий на странице'}).click();
+  await page.getByRole('option',{name:'50',exact:true}).click();
+  await expect(page.getByText('Страница 1 из 2',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Следующая страница',exact:true}).click();
+  await expect(page.getByRole('link',{name:'Предприятие 51',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Следующая страница',exact:true})).toBeDisabled();
+  await page.getByRole('combobox',{name:'Состояние',exact:true}).click();
+  await page.getByRole('option',{name:'Архив',exact:true}).click();
+  await expect(page.getByText('Страница 1 из 2',{exact:true})).toBeVisible();
+  expect(requests.at(-1)).toMatchObject({limit:50,offset:0,status:'archived'});
+  await page.getByRole('button',{name:'Следующая страница',exact:true}).click();
+  await expect(page.getByText('Страница 2 из 2',{exact:true})).toBeVisible();
+  await page.getByRole('textbox',{name:'Поиск предприятий',exact:true}).fill('Предприятие 1');
+  await expect(page.getByText('Страница 1 из 1',{exact:true})).toBeVisible();
+  expect(requests.at(-1)).toMatchObject({limit:50,offset:0,search:'Предприятие 1'});
 });

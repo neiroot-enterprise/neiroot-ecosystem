@@ -10,20 +10,19 @@ async function logout(page:Page){
 }
 test('Auth theme: two steps, real registration and phone/email login',async({page})=>{
  test.setTimeout(90000);
- // Admin credentials are used through Node fetch, outside Playwright traces.
+ // Keep the realm-scoped provisioning token outside Playwright traces.
  const config=readFileSync('../../.env','utf8');
- const adminPassword=config.match(/^KEYCLOAK_ADMIN_PASSWORD=(.+)$/m)![1].trim();
- const auth=await fetch(base+'/auth/realms/master/protocol/openid-connect/token',{method:'POST',body:new URLSearchParams({grant_type:'password',client_id:'admin-cli',username:'neiroot-local-admin',password:adminPassword})});
- if(!auth.ok)throw new Error('Test cleanup authentication failed');
+ const secret=config.match(/^KEYCLOAK_PROVISIONER_SECRET=(.+)$/m)?.[1].trim();
+ if(!secret)throw new Error('Test provisioning client configuration is missing');
+ const auth=await fetch(base+'/auth/realms/neiroot/protocol/openid-connect/token',{method:'POST',body:new URLSearchParams({grant_type:'client_credentials',client_id:'neiroot-provisioner',client_secret:secret})});
+ if(!auth.ok)throw new Error(`Test provisioning authentication failed (${auth.status})`);
  const {access_token:token}=await auth.json() as {access_token:string};
  const email=`theme-${randomUUID()}@example.test`,phone='+7'+Date.now().toString().slice(-10);
  const existingEmail='existing-'+email;
  try {
   await page.emulateMedia({colorScheme:'dark'});
   await page.goto(base);await expect(page.locator('#kc-login')).toBeVisible();
-  await expect(page.locator('.neiroot-brand img')).toBeVisible();
-  await expect(page.locator('.neiroot-brand img')).toHaveAttribute('src',/neiroot-wordmark\.png\?v=20261029-2$/);
-  await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(381);
+  await expect(page.locator('#kc-header-wrapper')).toHaveCSS('background-image',/neiroot-wordmark\.png\?v=20261029-2/);
   await expect(page.getByText('Ваше рабочее экосистему',{exact:true})).toHaveCount(0);
   await page.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();
   await expect(page.locator('#lastName')).toBeVisible();await expect(page.locator('#username')).toBeHidden();
@@ -91,12 +90,46 @@ test('Auth theme: narrow screen, white fields, language and back to login',async
  await page.locator('#username').fill('+442079460123');await expect(page.locator('#username')).toHaveValue('+442079460123');
  await page.screenshot({path:'test-results/registration-step2-mobile.png',fullPage:true});
  await page.getByRole('link',{name:/Назад к логину/}).click();await expect(page.locator('#kc-login')).toBeVisible();
- await expect(page.locator('.neiroot-brand img')).toBeVisible();
- await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBeGreaterThan(0);
+ await expect(page.locator('#kc-header-wrapper')).toBeVisible();
  await expect(page.locator('#username')).toHaveAttribute('placeholder','+7');
  await page.locator('#username').fill('123@example.test');await page.locator('#password').focus();await expect(page.locator('#username')).toHaveValue('123@example.test');
  await page.locator('#username').clear();
  await page.screenshot({path:'test-results/login-mobile.png',fullPage:true});
+ const language=page.getByRole('button',{name:'Язык',exact:true});
+ await expect(language).toHaveAccessibleDescription('Русский');
+ const initialLanguageBox=await language.boundingBox();
+ const initialBrandBox=await page.locator('#kc-header-wrapper').boundingBox();
+ expect(initialLanguageBox?.width).toBe(128);
+ await language.click();
+ await expect(page.getByRole('listbox',{name:'Язык',exact:true}).getByRole('option')).toHaveText(['Английский','Русский']);
+ await page.getByRole('option',{name:'Английский',exact:true}).click();
+ await expect(page.locator('html')).toHaveAttribute('lang',/^en/);
+ await expect(page.locator('#kc-login')).toBeVisible();
+ const englishLanguage=page.getByRole('button',{name:'Language',exact:true});
+ await expect(englishLanguage).toHaveAccessibleDescription('English');
+ const englishLanguageBox=await englishLanguage.boundingBox();
+ expect(englishLanguageBox).toEqual(initialLanguageBox);
+ expect(await page.locator('#kc-header-wrapper').boundingBox()).toEqual(initialBrandBox);
+ await englishLanguage.click();
+ await page.getByRole('option',{name:'Russian',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Авторизация',exact:true})).toBeVisible();
+ expect(await page.locator('#kc-header-wrapper').boundingBox()).toEqual(initialBrandBox);
+});
+
+test('Login logo renders in place without the theme script',async({page})=>{
+ await page.setViewportSize({width:390,height:900});
+ await page.route('**/js/neiroot.js?*',route=>route.abort());
+ await page.goto(base);
+ const brand=page.locator('#kc-header-wrapper');
+ await expect(brand).toHaveText('NEIROOT');
+ await expect(brand).toHaveCSS('height','20px');
+ await expect(brand).toHaveCSS('background-image',/neiroot-wordmark\.png/);
+ const initialBox=await brand.boundingBox();
+ expect(initialBox?.x).toBe(12);
+ await page.unroute('**/js/neiroot.js?*');
+ await page.reload();
+ await expect(page.getByRole('button',{name:'Язык',exact:true})).toBeVisible();
+ expect(await brand.boundingBox()).toEqual(initialBox);
 });
 
 test('Stale callback shows a recovery page and keeps the JSON error contract',async({page})=>{
@@ -108,20 +141,92 @@ test('Stale callback shows a recovery page and keeps the JSON error contract',as
 });
 
 for (const width of [1280,390]) {
- test(`Login field error matches the compact reference at ${width}px`,async({page})=>{
+ test(`Login uses the Base Nova layout and preserves field errors at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});
   await page.goto(base);
   await expect(page.locator('#kc-login')).toBeVisible();
   await expect(page.locator('#username')).toHaveAttribute('autocomplete','username');
-  expect(await page.locator('#kc-form-login').evaluate(e=>getComputedStyle(e).gap)).toBe('28px');
+  await expect(page.getByRole('heading',{name:'Авторизация',exact:true})).toBeVisible();
+  await expect(page.locator('#kc-page-title')).toHaveCSS('text-align','center');
+  const header=page.locator('header#kc-header');
+  const brand=header.getByText('NEIROOT',{exact:true});
+  const language=header.getByRole('button',{name:'Язык',exact:true});
+  await expect(header).toHaveCSS('height','56px');
+  await expect(header).toHaveCSS('border-bottom-width','1px');
+  await expect(brand).toHaveCSS('height','20px');
+  await expect(page.locator('.pf-v5-c-login__main .neiroot-brand')).toHaveCount(0);
+  await expect(language).toHaveCSS('height','32px');
+  const headerBox=(await header.boundingBox())!, brandBox=(await brand.boundingBox())!, languageBox=(await language.boundingBox())!;
+  const inset=width>=768 ? 16 : 12;
+  expect(brandBox.x-headerBox.x).toBe(inset);
+  expect(headerBox.x+headerBox.width-languageBox.x-languageBox.width).toBe(inset);
+  await page.locator('#username').focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(language).toBeFocused();
+  await expect(language).toHaveCSS('outline-color','rgb(47, 125, 74)');
+  await expect(language).toHaveCSS('outline-width','2px');
+  await expect(language.locator('..')).toHaveCSS('outline-style','none');
+  await page.keyboard.press('Space');
+  const languageList=page.getByRole('listbox',{name:'Язык',exact:true});
+  const currentLanguage=languageList.getByRole('option',{name:'Русский',exact:true});
+  await expect(currentLanguage).toBeFocused();
+  await expect(currentLanguage).toHaveAttribute('aria-selected','true');
+  await expect(currentLanguage).toHaveCSS('background-color','rgb(232, 244, 236)');
+  const englishOption=(await languageList.getByRole('option',{name:'Английский',exact:true}).boundingBox())!;
+  const russianOption=(await currentLanguage.boundingBox())!;
+  expect(russianOption.y-englishOption.y-englishOption.height).toBe(1);
+  await expect(language).toHaveCSS('opacity','0');
+  const popup=(await languageList.locator('..').boundingBox())!;
+  expect(popup.y).toBeGreaterThanOrEqual(0);
+  expect(popup.x+popup.width).toBeCloseTo(languageBox.x+languageBox.width,0);
+  await page.screenshot({path:`test-results/login-language-${width}.png`,fullPage:true});
+  await page.keyboard.press('ArrowUp');
+  await expect(languageList.getByRole('option',{name:'Английский',exact:true})).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(languageList).toBeHidden();
+  await expect(language).toBeFocused();
+  await expect(language).toHaveCSS('opacity','1');
+  await expect(page.locator('.pf-v5-c-login__main')).toHaveCSS('border-radius','12px');
+  await expect(page.locator('.pf-v5-c-login__main')).toHaveCSS('padding','16px');
+  await expect(page.locator('.pf-v5-c-login__container')).toHaveCSS('max-width','384px');
+  await expect(page.locator('#kc-login')).toHaveCSS('height','40px');
+  await expect(page.locator('#kc-login')).toHaveCSS('background-color','rgb(47, 125, 74)');
+  await expect(page.locator('#username').locator('..')).toHaveCSS('height','40px');
+  await expect(page.locator('#password').locator('xpath=ancestor::div[contains(@class,"pf-v5-c-input-group")][last()]')).toHaveCSS('height','40px');
+  await expect(page.locator('#kc-form-login')).toHaveCSS('gap','20px');
+  const usernameBox=(await page.locator('#username').locator('..').boundingBox())!;
+  const buttonBox=(await page.locator('#kc-login').boundingBox())!;
+  expect(buttonBox.x).toBe(usernameBox.x);
+  expect(buttonBox.width).toBe(usernameBox.width);
+  const usernameLabel=(await page.locator('label[for="username"]').boundingBox())!;
+  const passwordLabel=(await page.locator('label[for="password"]').boundingBox())!;
+  const passwordBox=(await page.locator('#kc-form-login .pf-v5-c-input-group').boundingBox())!;
+  expect(usernameBox.y-usernameLabel.y-usernameLabel.height).toBe(8);
+  expect(passwordBox.y-passwordLabel.y-passwordLabel.height).toBe(8);
+  expect(passwordLabel.y-usernameBox.y-usernameBox.height).toBe(20);
+  expect(buttonBox.y-passwordBox.y-passwordBox.height).toBe(20);
+  expect(await page.locator('#username').evaluate(async input=>{
+   const fonts=await document.fonts.load('400 14px "Onest Variable"','Телефон Email');
+   return getComputedStyle(input).fontFamily.startsWith('"Onest Variable"') && fonts.every(font=>font.status==='loaded') && fonts.length>=2;
+  })).toBe(true);
+  await page.locator('#username').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#password')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button',{name:'Показать пароль'})).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#password')).toHaveAttribute('type','text');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#password')).toHaveAttribute('type','password');
+  await page.getByRole('heading',{name:'Авторизация',exact:true}).click();
+  await page.screenshot({path:`test-results/login-base-nova-${width}.png`,fullPage:true});
   expect((await page.locator('#input-error-container-username').boundingBox())!.height).toBe(0);
   await page.locator('#username').fill(`missing-${randomUUID()}@example.test`);
   await page.locator('#password').fill('IncorrectSyntheticPassword!42');
   await page.locator('#kc-login').click();
   const error=page.locator('#input-error-username');
   await expect(error).toContainText('Неправильное имя пользователя или пароль');
-  await expect(page.locator('.neiroot-brand img')).toBeVisible();
-  await expect.poll(()=>page.locator('.neiroot-brand img').evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBe(381);
+  await expect(page.locator('#kc-header-wrapper')).toBeVisible();
   const control=page.locator('#username').locator('..');
   const appearance=await control.evaluate(e=>({outline:getComputedStyle(e).outline,color:getComputedStyle(e).borderColor,background:getComputedStyle(e.querySelector('input')!).backgroundColor}));
   expect(appearance.outline).toBe('rgb(255, 77, 80) solid 2px');
@@ -131,7 +236,7 @@ for (const width of [1280,390]) {
   const fieldBox=(await control.boundingBox())!,errorBox=(await error.boundingBox())!;
   expect(errorBox.y-fieldBox.y-fieldBox.height).toBe(8);
   const nextGroup=(await page.locator('#password').locator('xpath=ancestor::div[contains(@class,"pf-v5-c-form__group")]').boundingBox())!;
-  expect(nextGroup.y-errorBox.y-errorBox.height).toBe(16);
+  expect(nextGroup.y-errorBox.y-errorBox.height).toBe(20);
   await expect(page.locator('#neiroot-login-error')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:`test-results/login-reference-error-${width}.png`,fullPage:true});
