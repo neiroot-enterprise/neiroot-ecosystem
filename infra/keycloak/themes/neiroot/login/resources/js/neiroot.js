@@ -1,14 +1,161 @@
+function enhanceLanguageSelect(select, label) {
+  select.setAttribute('aria-label', label);
+  if (!('showPopover' in HTMLElement.prototype) || select.options.length < 2) return;
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'neiroot-language-trigger';
+  trigger.setAttribute('aria-haspopup', 'listbox');
+  trigger.setAttribute('aria-label', label);
+  trigger.setAttribute('aria-expanded', 'false');
+
+  const current = document.createElement('span');
+  current.id = 'neiroot-language-current';
+  current.className = 'neiroot-language-value';
+  current.textContent = select.selectedOptions[0].textContent;
+  trigger.setAttribute('aria-describedby', current.id);
+
+  const popup = document.createElement('div');
+  popup.id = 'neiroot-language-popup';
+  popup.className = 'neiroot-language-popup';
+  popup.popover = 'auto';
+  trigger.setAttribute('aria-controls', popup.id);
+
+  const title = document.createElement('div');
+  title.className = 'neiroot-language-label';
+  title.textContent = label;
+  const list = document.createElement('div');
+  list.setAttribute('role', 'listbox');
+  list.setAttribute('aria-label', label);
+
+  const options = Array.from(select.options, (option, index) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'neiroot-language-option';
+    item.tabIndex = -1;
+    item.textContent = option.textContent;
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', String(option.selected));
+    item.addEventListener('click', () => {
+      popup.hidePopover();
+      trigger.focus();
+      if (index === select.selectedIndex) return;
+      select.selectedIndex = index;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    list.append(item);
+    return item;
+  });
+
+  trigger.append(current);
+  popup.append(title, list);
+  select.parentElement.hidden = true;
+  select.closest('.neiroot-language').append(trigger, popup);
+
+  function open() {
+    if (popup.matches(':popover-open')) return;
+    const anchor = trigger.getBoundingClientRect();
+    popup.style.right = `${document.documentElement.clientWidth - anchor.right}px`;
+    popup.showPopover({ source: trigger });
+    const selected = options[select.selectedIndex];
+    const offset = selected.getBoundingClientRect().top - popup.getBoundingClientRect().top;
+    const alignedTop = anchor.top + (anchor.height - selected.offsetHeight) / 2 - offset;
+    popup.style.top = `${Math.max(4, Math.min(alignedTop, window.innerHeight - popup.offsetHeight - 4))}px`;
+    selected.focus({ preventScroll: true });
+  }
+
+  trigger.addEventListener('click', open);
+  trigger.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      open();
+    }
+  });
+  popup.addEventListener('beforetoggle', event => {
+    trigger.setAttribute('aria-expanded', String(event.newState === 'open'));
+  });
+  list.addEventListener('keydown', event => {
+    const index = options.indexOf(document.activeElement);
+    switch (event.key) {
+      case 'ArrowDown': options[(index + 1) % options.length].focus(); break;
+      case 'ArrowUp': options[(index - 1 + options.length) % options.length].focus(); break;
+      case 'Home': options[0].focus(); break;
+      case 'End': options[options.length - 1].focus(); break;
+      case 'Escape':
+        popup.hidePopover();
+        trigger.focus();
+        break;
+      default: return;
+    }
+    event.preventDefault();
+  });
+  popup.addEventListener('focusout', event => {
+    if (event.relatedTarget && !popup.contains(event.relatedTarget) && popup.matches(':popover-open')) {
+      popup.hidePopover();
+    }
+  });
+}
+
+function addSignInThemeToggle(header) {
+  const root = document.documentElement;
+  const storageKey = 'neiroot-theme';
+  const isRussian = root.lang.startsWith('ru');
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'neiroot-theme-toggle';
+  const icons = {
+    moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6.5 6.5 0 0 0 8.268 8.268c.344-.215.825-.004.803.401Z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42m0-14.14-1.42 1.42M6.35 17.65l-1.42 1.42"/>',
+  };
+
+  function render(dark) {
+    root.classList.toggle('dark', dark);
+    const label = dark
+      ? (isRussian ? 'Включить светлую тему' : 'Switch to light theme')
+      : (isRussian ? 'Включить тёмную тему' : 'Switch to dark theme');
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${dark ? icons.sun : icons.moon}</svg>`;
+  }
+
+  let dark = false;
+  try { dark = localStorage.getItem(storageKey) === 'dark'; } catch {}
+  render(dark);
+  button.addEventListener('click', () => {
+    dark = !dark;
+    render(dark);
+    try { localStorage.setItem(storageKey, dark ? 'dark' : 'light'); } catch {}
+  });
+  header.append(button);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const main = document.querySelector('.pf-v5-c-login__main');
   const script = document.querySelector('script[src*="neiroot.js"]');
-  if (main && script) {
-    const brand = document.createElement('div'); brand.className = 'neiroot-brand';
-    const img = document.createElement('img'); img.alt = 'NEIROOT';
-    img.src = script.src.replace('js/neiroot.js', 'img/neiroot-wordmark.png');
-    brand.append(img); main.prepend(brand);
+  const header = document.querySelector('#kc-form-login') ? document.querySelector('#kc-header') : null;
+
+  if (!header && main && script) {
+    const brand = document.createElement('div');
+    brand.className = 'neiroot-brand';
+    const img = document.createElement('img');
+    img.alt = 'NEIROOT';
+    img.src = new URL('../img/neiroot-wordmark.png?v=20261029-2', script.src).href;
+    brand.append(img);
+    main.prepend(brand);
   }
   const language = document.querySelector('.pf-v5-c-login__main-header-utilities');
-  if (language) { language.classList.add('neiroot-language'); document.body.append(language); }
+  if (language) {
+    language.classList.add('neiroot-language');
+    (header ?? document.body).append(language);
+    if (header) {
+      const label = document.documentElement.lang.startsWith('ru') ? 'Язык' : 'Language';
+      const select = language.querySelector('select');
+      if (select) enhanceLanguageSelect(select, label);
+    }
+  }
+
+  if (header) addSignInThemeToggle(header);
+
   const form = document.querySelector('#kc-register-form');
   const phone = document.querySelector('input[name="username"]');
   if (phone) {

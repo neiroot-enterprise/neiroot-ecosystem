@@ -1,0 +1,188 @@
+/* Catalog layout uses the shared theme for enterprises and organizations. */
+.enterprise-ui { min-width: 0; font-size: .875rem; line-height: 1.25rem; }
+.enterprise-ui section { display: grid; gap: 1rem; min-width: 0; }
+.enterprise-ui section.catalog-directory { gap: .5rem; }
+:root:not(.dark) .enterprise-ui .catalog-directory [data-slot="tabs-list"][data-variant="default"] {
+ background-color: color-mix(in srgb, var(--muted) 96%, var(--foreground));
+}
+.enterprise-ui .catalog-directory [data-slot="tabs-trigger"][data-active] {
+ background-color: var(--sidebar-accent);
+ color: var(--sidebar-accent-foreground);
+}
+.enterprise-ui .section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.enterprise-ui h1 { font-size: 1.5rem; line-height: 2rem; font-weight: 600; overflow-wrap: anywhere; }
+.enterprise-ui h2 { font-size: 1rem; line-height: 1.375rem; font-weight: 500; overflow-wrap: anywhere; }
+.enterprise-ui .catalog-panel { min-width: 0; padding: 1rem; display: grid; gap: 1rem; }
+.enterprise-ui .catalog-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; }
+.enterprise-ui .catalog-toolbar h2 { flex: 1; align-self: center; }
+.enterprise-ui .catalog-toolbar .field:first-child { flex: 1; min-width: 10rem; }
+.enterprise-ui .catalog-actions, .enterprise-ui .form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.enterprise-ui .form-actions { justify-content: flex-end; margin-top: 1rem; }
+.enterprise-ui form { display: grid; gap: 1rem; }
+.enterprise-ui .field { display: grid; gap: .5rem; min-width: 0; color: var(--muted-foreground); }
+.enterprise-ui .field input { color: var(--foreground); }
+.enterprise-ui select { width: 100%; min-width: 0; height: 2rem; padding: 0 .5rem; border: 1px solid var(--input); border-radius: var(--radius-lg); background: var(--card); color: var(--foreground); font: inherit; font-weight: 500; }
+.enterprise-ui :is(select, a, summary, [tabindex]):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.enterprise-ui .tabs { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 1px solid var(--border); padding-bottom: .5rem; }
+.enterprise-ui .tabs :is(a,button) { border: 0; background: transparent; box-shadow: none; border-radius: var(--radius-lg); padding: .5rem .75rem; color: var(--muted-foreground); }
+.enterprise-ui .tabs :is(.active,[aria-current=page]) { background: var(--accent); color: var(--accent-foreground); font-weight: 500; }
+.enterprise-ui .tabs :is(a,button):hover { background: var(--accent); color: var(--accent-foreground); }
+.enterprise-ui .back { display: inline-flex; align-items: center; justify-self: start; min-height: 2rem; padding: .25rem .625rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); font-weight: 500; }
+.enterprise-ui .pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; color: var(--muted-foreground); }
+.enterprise-ui .pagination > div { display: flex; align-items: center; gap: .75rem; }
+.enterprise-ui .empty { text-align: center; color: var(--muted-foreground); padding: 2rem 1rem; }
+.enterprise-ui .field-help, .enterprise-ui .muted { color: var(--muted-foreground); font-size: .75rem; line-height: 1.125rem; }
+.enterprise-ui .status { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-md); padding: .125rem .5rem; font-size: .75rem; color: var(--muted-foreground); }
+.enterprise-ui .success-note { color: var(--primary); }
+.enterprise-ui .catalog-link-list { display: grid; gap: .5rem; }
+.enterprise-ui .catalog-link-list li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: .75rem; }
+.enterprise-ui .catalog-link-list li > :first-child { flex: 1; min-width: 8rem; overflow-wrap: anywhere; }
+.enterprise-ui .catalog-link-list a:hover { color: var(--primary); }
+.enterprise-ui .catalog-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+.enterprise-ui .catalog-options button { white-space: normal; height: auto; min-height: 2rem; overflow-wrap: anywhere; }
+.enterprise-ui details { border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--card); }
+.enterprise-ui summary { cursor: pointer; font-weight: 500; }
+.enterprise-ui details[open] > summary { margin-bottom: 1rem; }
+.enterprise-ui .department-tree-scroll { overflow: auto; max-width: 100%; padding: .25rem; }
+@media (min-width: 768px) { .enterprise-ui h1 { font-size: 1.875rem; line-height: 2.25rem; } }
+@media (max-width: 639px) {
+ .enterprise-ui .catalog-toolbar { align-items: stretch; }
+ .enterprise-ui .catalog-toolbar > .field { width: 100%; }
+ .enterprise-ui .catalog-toolbar h2 { flex-basis: 100%; }
+ .enterprise-ui .catalog-panel { padding: .75rem; }
+}
+
+.enterprise-ui .department-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enterprise-ui .catalog-link-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.enterprise-ui .catalog-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.enterprise-ui .department-tree-scroll {
+  margin: -0.25rem;
+  padding: 0.25rem;
+}
+
+.enterprise-ui .department-tree {
+  --department-indent: 1.5rem;
+  min-width: calc(13.75rem + var(--max-depth, 0) * var(--department-indent));
+}
+
+.enterprise-ui .department-node {
+  position: relative;
+  isolation: isolate;
+  padding: 0.25rem 0;
+}
+
+.enterprise-ui .department-row {
+  position: relative;
+  min-width: 13.75rem;
+  margin-inline-start: calc(var(--depth) * var(--department-indent));
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 0.5rem;
+}
+
+.enterprise-ui .department-guide,
+.enterprise-ui .department-branch,
+.enterprise-ui .department-stem {
+  position: absolute;
+  z-index: -1;
+  border-color: var(--border);
+  pointer-events: none;
+}
+
+.enterprise-ui .department-guide {
+  inset-block: 0;
+  inset-inline-start: calc((var(--guide-level) - 0.5) * var(--department-indent));
+  border-inline-start: 1px solid var(--border);
+}
+
+.enterprise-ui .department-branch {
+  inset-block: 0;
+  inset-inline-start: calc((var(--depth) - 0.5) * var(--department-indent));
+  width: calc(var(--department-indent) / 2);
+}
+
+.enterprise-ui .department-branch::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-inline-start: 1px solid var(--border);
+  content: "";
+}
+
+.enterprise-ui .department-branch.last::before {
+  inset-block-end: 50%;
+}
+
+.enterprise-ui .department-branch::after {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  border-block-start: 1px solid var(--border);
+  content: "";
+}
+
+.enterprise-ui .department-stem {
+  inset-block-start: 50%;
+  inset-block-end: 0;
+  inset-inline-start: calc((var(--depth) + 0.5) * var(--department-indent));
+  border-inline-start: 1px solid var(--border);
+}
+
+.enterprise-ui .department-title {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.375rem;
+  overflow-wrap: anywhere;
+}
+
+.enterprise-ui .department-title strong {
+  min-width: 0;
+  flex: 1;
+}
+
+.enterprise-ui .department-parent-path {
+  padding: 0.25rem 0.5rem 0;
+  overflow-wrap: anywhere;
+}
+
+.enterprise-ui .drag-handle {
+  padding: 0.5rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.enterprise-ui .drop-before { border-top: 3px solid var(--primary); }
+.enterprise-ui .drop-after { border-bottom: 3px solid var(--primary); }
+.enterprise-ui .drop-inside { outline: 2px solid var(--primary); background: var(--accent); }
+
+@media (max-width: 639px) {
+  .enterprise-ui .department-tree { --department-indent: 1rem; }
+  .enterprise-ui .department-row { padding-right: .25rem; }
+}
+
+/* Standalone list: inset controls, edge-to-edge rows and footer. */
+.enterprise-ui .enterprise-list { gap: 0; padding-block: 0; }
+.enterprise-ui .enterprise-list > [role="alert"] { margin: 1rem; }
+.enterprise-ui .enterprise-list .field { grid-template-columns: auto minmax(0, 10rem); align-items: center; }

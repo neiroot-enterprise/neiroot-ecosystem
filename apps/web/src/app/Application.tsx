@@ -71,13 +71,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
+import { NotificationsPage, notificationsPath, ProfilePage, profilePath } from "./account-pages";
 import {
   Collapsible,
   CollapsibleContent,
@@ -339,7 +333,9 @@ export function Application() {
   const section =
     selected.sections.find((item) => item[0] === segments[1]) ||
     selected.sections[0];
-  const isEmployees = selected.id === "company" && section[0] === "employees";
+  const accountPath = location.pathname.replace(/\/$/, "");
+  const isAccountPage = accountPath === profilePath || accountPath === notificationsPath;
+  const isEmployees = !isAccountPage && selected.id === "company" && section[0] === "employees";
   const defaultOpen = (() => {
     try {
       return localStorage.getItem("neiroot-sidebar-open") !== "false";
@@ -354,7 +350,7 @@ export function Application() {
     >
       <AppSidebar
         me={me}
-        selected={selected}
+        selected={isAccountPage ? undefined : selected}
         sectionId={section[0]}
         onLogout={logout}
       />
@@ -373,7 +369,11 @@ export function Application() {
           key={tenant.id}
         >
           <ErrorMessage error={globalError} className="mb-4" />
-          {isEmployees ? (
+          {accountPath === profilePath ? (
+            <ProfilePage account={me} />
+          ) : accountPath === notificationsPath ? (
+            <NotificationsPage />
+          ) : isEmployees ? (
             segments[2] === "new" ? (
               <CreateEmployee tenant={tenant} onDirty={setDirty} />
             ) : segments[2] ? (
@@ -388,7 +388,7 @@ export function Application() {
             )
           ) : selected.id === "company" &&
             (section[0] === "businesses" || section[0] === "organizations") ? (
-            <div className="legacy-ui">
+            <div>
               <CatalogPage
                 key={section[0]}
                 tenant={tenant}
@@ -581,7 +581,7 @@ function AppSidebar({
   onLogout,
 }: {
   me: Extract<Session, { authenticated: true }>;
-  selected: Module;
+  selected: Module | undefined;
   sectionId: string;
   onLogout: () => void;
 }) {
@@ -589,11 +589,7 @@ function AppSidebar({
   const location = useLocation();
   const { state, setOpenMobile, isMobile } = useSidebar();
   const compactProfile = state === "collapsed" && !isMobile;
-  const [openModule, setOpenModule] = useState(selected.id);
-  const [profileSection, setProfileSection] = useState<
-    "Профиль" | "Уведомление" | null
-  >(null);
-  const profileTrigger = useRef<HTMLButtonElement>(null);
+  const [openModule, setOpenModule] = useState(selected?.id ?? "");
   const nameParts = [me.lastName?.trim() ?? "", me.firstName?.trim() ?? ""].filter(
     Boolean,
   );
@@ -614,7 +610,7 @@ function AppSidebar({
       </AvatarFallback>
     </Avatar>
   );
-  useEffect(() => setOpenModule(selected.id), [selected.id]);
+  useEffect(() => { if (selected) setOpenModule(selected.id); }, [selected]);
   const follow = (path: string) => {
     if (isMobile) setOpenMobile(false);
     navigate(path);
@@ -645,7 +641,7 @@ function AppSidebar({
                     >
                       <SidebarMenuButton
                         tooltip={module.name}
-                        isActive={module.id === selected.id}
+                        isActive={module.id === selected?.id}
                         className="group-has-[[data-sidebar=menu-action]:hover]/menu-item:bg-sidebar-accent group-has-[[data-sidebar=menu-action]:hover]/menu-item:text-sidebar-accent-foreground"
                         onClick={() => {
                           if (state === "collapsed")
@@ -682,7 +678,7 @@ function AppSidebar({
                               id
                             ] as ComponentType<{ className?: string }>;
                             const active =
-                              module.id === selected.id && id === sectionId;
+                              module.id === selected?.id && id === sectionId;
                             const path = `/${module.id}/${id}`;
                             return (
                               <SidebarMenuSubItem key={id}>
@@ -721,7 +717,6 @@ function AppSidebar({
               <DropdownMenuTrigger
                 render={
                   <SidebarMenuButton
-                    ref={profileTrigger}
                     size="lg"
                     className="h-[34px] px-0 group-data-[collapsible=icon]:size-[34px]! group-data-[collapsible=icon]:justify-start group-data-[collapsible=icon]:rounded-full data-[popup-open]:bg-sidebar-accent data-[popup-open]:text-sidebar-accent-foreground"
                     aria-label="Меню профиля"
@@ -763,16 +758,16 @@ function AppSidebar({
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => setProfileSection("Профиль")}
+                    onClick={() => follow(profilePath)}
                   >
                     <UserRound />
                     Профиль
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setProfileSection("Уведомление")}
+                    onClick={() => follow(notificationsPath)}
                   >
                     <Bell />
-                    Уведомление
+                    Уведомления
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
@@ -785,19 +780,6 @@ function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <Dialog
-        open={profileSection !== null}
-        onOpenChange={(open) => {
-          if (!open) setProfileSection(null);
-        }}
-      >
-        <DialogContent finalFocus={profileTrigger}>
-          <DialogHeader>
-            <DialogTitle>{profileSection}</DialogTitle>
-            <DialogDescription>Раздел в разработке.</DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
       <SidebarRail />
     </Sidebar>
   );

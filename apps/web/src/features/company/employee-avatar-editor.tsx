@@ -90,7 +90,7 @@ export function EmployeeAvatarEditor({ initialImage, fallback }: { initialImage?
             <DialogTitle className="leading-6">Фото сотрудника</DialogTitle>
           </DialogHeader>
           <div className="relative mx-auto size-48">
-          <div ref={setFrame} className="relative mx-auto size-48 touch-none overflow-hidden rounded-full bg-muted cursor-grab active:cursor-grabbing"
+          <div ref={setFrame} className={`relative mx-auto size-48 touch-none overflow-hidden rounded-full bg-muted ${draft ? "cursor-grab active:cursor-grabbing" : ""}`}
             onPointerDown={(event) => {
               if (!draft || event.button !== 0) return;
               event.preventDefault();
@@ -112,7 +112,7 @@ export function EmployeeAvatarEditor({ initialImage, fallback }: { initialImage?
               style={{ width: dimensions.width * baseScale * crop.zoom, height: dimensions.height * baseScale * crop.zoom, left: "50%", top: "50%", transform: `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px))` }}
               onError={() => setError("Не удалось открыть изображение.")}
               onLoad={(event) => { setDimensions({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }); setError(""); }} />
-              : <div className="flex size-full items-center justify-center text-muted-foreground"><Camera className="size-10" aria-label="Фото отсутствует" /></div>}
+              : <button type="button" className="flex size-full cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" aria-label="Загрузить фото" onClick={() => input.current?.click()}><Camera className="size-10" aria-hidden="true" /></button>}
           </div>
             <div className="pointer-events-none absolute inset-0">
                 <Tooltip><TooltipTrigger delay={800} render={<EmployeeCardButton variant="ghost" className="pointer-events-auto absolute right-[2.6px] bottom-[23.2px] size-7 rounded-full border bg-card px-0 shadow-sm hover:bg-muted" aria-label={draft ? "Заменить фото" : "Загрузить фото"} onClick={() => input.current?.click()} />}> <ImagePlus aria-hidden="true" /></TooltipTrigger><TooltipContent side="right">{draft ? "Заменить фото" : "Загрузить фото"}</TooltipContent></Tooltip>
