@@ -132,7 +132,7 @@ function addSignInThemeToggle(header) {
 document.addEventListener('DOMContentLoaded', () => {
   const main = document.querySelector('.pf-v5-c-login__main');
   const script = document.querySelector('script[src*="neiroot.js"]');
-  const header = document.querySelector('#kc-form-login') ? document.querySelector('#kc-header') : null;
+  const header = document.querySelector('#kc-form-login, #kc-register-form') ? document.querySelector('#kc-header') : null;
 
   if (!header && main && script) {
     const brand = document.createElement('div');
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const back = document.createElement('button'), next = document.createElement('button');
   back.type = next.type = 'button'; back.className = 'neiroot-secondary'; next.className = 'pf-v5-c-button pf-m-primary';
   back.textContent = form.dataset.back; next.textContent = form.dataset.next;
-  actions.append(back, next); submit.before(actions);
+  submit.before(actions); actions.append(back, next, submit);
   let currentStep = 0;
   let submitting = false;
   const show = (step, focus = true) => {

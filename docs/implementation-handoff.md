@@ -1,6 +1,6 @@
 # Передача текущей реализации
 
-Работа начата по утверждённому плану пользователя от 2 октября 2026 года. Читать [AGENTS.md](../AGENTS.md), [PROJECT_MEMORY.md](../PROJECT_MEMORY.md), [mvp.md](mvp.md), [test-report.md](test-report.md), затем профильные документы.
+Работа начата по утверждённому плану пользователя от 2 октября 2026 года. Начинать с [AGENTS.md](../AGENTS.md) и [оглавления](index.md), затем читать [PROJECT_MEMORY.md](../PROJECT_MEMORY.md), [mvp.md](mvp.md), [test-report.md](test-report.md), затем профильные документы.
 
 Существующий проект: apps/web (React/TS), services/bff и services/core (Go/chi), общий технический internal, infra и scripts. Четыре модуля ядра; company владеет карточками сотрудников, settings — tenant/членствами/ролями/приглашениями. Модульные SQL-адаптеры не используют чужие таблицы. Домен независим. Контракт — docs/api/openapi.json.
 
