@@ -75,27 +75,9 @@ Gateway/BFF — логическая входная группа: reverse proxy 
 - Для разработки — Docker Compose. Производственная топология, HA, реплики и необходимость Kubernetes определяются после требований к доступности и нагрузке.
 - Temporal для долгих сценариев и pgvector для RAG рассматриваются при подтверждённой потребности; на текущую схему не добавлены.
 
-## Обновление изображения
+## Карта реализации
 
-После изменения `architecture.json` запустить:
-
-```powershell
-node docs/diagrams/render-architecture.cjs "ПУТЬ_К_NODE_MODULES"
-```
-
-Требуются `@viz-js/viz` и `sharp`; воспроизводимые зависимости закреплены в tools/diagrams/package-lock.json. Рендер обновляет DOT, PlantUML, SVG и PNG. Проверяет ошибки компоновки и фиксирует ширину; после изменений необходим визуальный просмотр.
-
-## PDF для просмотра
-
-`output/pdf/neiroot-saas-architecture.pdf` содержит текущую схему v0.7 на одной большой странице. Текст и линии векторные: схему можно увеличивать без потери чёткости. Компоновка и содержимое соответствуют SVG.
-
-После обновления изображения повторно экспортировать PDF:
-
-```powershell
-node docs/diagrams/export-architecture-pdf.cjs "ПУТЬ_К_NODE_MODULES"
-```
-
-Экспорт использует закреплённый Playwright и доступный Google Chrome.
+[BFF](services/bff/index.md) · [Core и его модули](services/core/index.md) · [Взаимодействия](interactions/index.md) · [Агенты](agents/index.md) · [Подготовка схем и PDF](diagrams/README.md).
 
 ## Официальные источники
 

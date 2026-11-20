@@ -12,37 +12,7 @@
 
 Агент начинает с [AGENTS.md](AGENTS.md) и выбирает профильные документы по типу задачи. Текущая сводка находится в [PROJECT_MEMORY.md](PROJECT_MEMORY.md#текущее-состояние), при продолжении незавершённой реализации полезен [документ передачи](docs/implementation-handoff.md). Пользовательские ответы и незакрытые решения находятся в [open-questions.md](docs/open-questions.md).
 
-## Карта документов
-
-| Документ | Для чего служит |
-|---|---|
-| [AGENTS.md](AGENTS.md) | Правила работы агента и обязательный порядок чтения |
-| [PROJECT_MEMORY.md](PROJECT_MEMORY.md) | Фактическое состояние, история и контекст |
-| [mvp.md](docs/mvp.md) | Границы первого этапа и степень готовности |
-| [requirements.md](docs/requirements.md) | Подтверждённые сценарии, что ещё нужно уточнить |
-| [access-model.md](docs/access-model.md) | Tenant, пользователи, вход и разрешения |
-| [api-contracts.md](docs/api-contracts.md) | OpenAPI, генерация и поведение API |
-| [frontend.md](docs/frontend.md) | Правила React/TypeScript и структура интерфейса |
-| [backend.md](docs/backend.md) | Правила Go, модулей и хранения данных |
-| [development.md](docs/development.md) | Общие инструменты разработки и проверки |
-| [quality.md](docs/quality.md) | Критерии сдачи и выбор проверок по изменению |
-| [test-report.md](docs/test-report.md) | Текущий статус приёмки и история выполненных проверок |
-| [dependency-licenses.md](docs/dependency-licenses.md) | Версии, лицензии и принадлежность зависимостей |
-| [implementation-plan.md](docs/implementation-plan.md) | Порядок утверждённого первого этапа |
-| [implementation-handoff.md](docs/implementation-handoff.md) | Контекст реализации и оставшейся приёмки |
-| [open-questions.md](docs/open-questions.md) | Вопросы с постоянными идентификаторами |
-| [decisions.md](docs/decisions.md) | Подтверждённые решения и предложения |
-| [architecture.md](docs/architecture.md) | Архитектура всей платформы |
-| [core-architecture.md](docs/core-architecture.md) | Модули и разделы ядра |
-
-## Дизайн интерфейса
-
-- [DESIGN.md](DESIGN.md) — общий визуальный язык и токены.
-- [Оболочка](docs/design/app-shell.md) — левое и верхнее меню, профиль и экосистема.
-- [Сотрудники](docs/design/employees.md) — пример согласованного раздела и границы прототипов.
-- [Компоненты](docs/design/components.md) — каталог готовых элементов и пути к реализации.
-- [Паттерны](docs/design/patterns.md) — формы, списки, загрузка, ошибки и черновики.
-- [Тексты](docs/design/content.md) — терминология и сообщения.
+[Оглавление документации разработки](docs/index.md) — маршруты по задачам, действующие правила и источники.
 
 ## Готовые материалы
 
@@ -51,8 +21,4 @@
 - [Дизайн-токены](docs/design/tokens.css) и [исходный логотип](docs/design/brand/neiroot-logo-source.png).
 - [Прозрачная надпись NEIROOT](docs/design/brand/neiroot-wordmark.png) для страниц входа и шапки приложения.
 
-## Правило источников
-
-Функциональность — `requirements.md` и `core-architecture.md`; первый этап — `mvp.md`; архитектура — соответствующие схемы и тексты; доступ — `access-model.md`; общий внешний вид — `DESIGN.md`, применение компонентов — `docs/design/`; точный HTTP-контракт после согласования — OpenAPI, см. `api-contracts.md`.
-
-Не копировать одинаковые определения в разные документы. При изменении решения обновлять его источник и связанные ссылки. Если документы противоречат друг другу, сопоставить их с актуальными указаниями пользователя и исправить противоречие.
+[Карта источников](docs/index.md#правило-источников).

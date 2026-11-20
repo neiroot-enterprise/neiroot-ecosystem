@@ -33,3 +33,6 @@ compose.local.yml
 compose.local.yaml
 compose.override.yml
 compose.override.yaml
+
+# Local Obsidian vault preferences
+/.obsidian/

@@ -1,0 +1,51 @@
+# Документация разработки Neiroot
+
+После [правил агента](../AGENTS.md) выберите область и перейдите к источнику. [Текущее состояние](../PROJECT_MEMORY.md#текущее-состояние) · [Журнал](history/project-log.md).
+
+- [Дизайн](../DESIGN.md) — общие правила; [варианты Button](design/components.md#button), [реализация](../apps/web/src/shared/ui/button.tsx), [тема](../apps/web/src/shared/styles/theme.css).
+- [Архитектура](architecture.md) — границы платформы и статус целевых компонентов.
+- [Сервисы](services/index.md) — BFF и Core; [модули ядра](core-architecture.md#модули-и-пользовательские-разделы).
+- [Агенты](agents/index.md) — целевая архитектура и порядок описания возможностей.
+- [Взаимодействия](interactions/index.md) — маршрут запроса, владелец операции и потребители.
+- [Приёмка](test-report.md) — подтверждённый объём, ограничения и история.
+- [Правила вики](workflows/knowledge-maintenance.md) — согласование, разделение страниц и работа с ветками.
+
+## Карта документов
+
+| Документ | Для чего служит |
+|---|---|
+| [AGENTS.md](../AGENTS.md) | Правила работы агента и обязательный порядок чтения |
+| [PROJECT_MEMORY.md](../PROJECT_MEMORY.md) | Текущее состояние и ссылка на архив |
+| [mvp.md](mvp.md) | Границы первого этапа и степень готовности |
+| [requirements.md](requirements.md) | Подтверждённые сценарии, что ещё нужно уточнить |
+| [access-model.md](access-model.md) | Tenant, пользователи, вход и разрешения |
+| [api-contracts.md](api-contracts.md) | OpenAPI, генерация и поведение API |
+| [frontend.md](frontend.md) | Правила React/TypeScript и структура интерфейса |
+| [backend.md](backend.md) | Правила Go, модулей и хранения данных |
+| [development.md](development.md) | Общие инструменты разработки и проверки |
+| [quality.md](quality.md) | Критерии сдачи и выбор проверок по изменению |
+| [test-report.md](test-report.md) | Текущий статус приёмки и история выполненных проверок |
+| [dependency-licenses.md](dependency-licenses.md) | Версии, лицензии и принадлежность зависимостей |
+| [implementation-plan.md](implementation-plan.md) | Порядок утверждённого первого этапа |
+| [implementation-handoff.md](implementation-handoff.md) | Контекст реализации и оставшейся приёмки |
+| [open-questions.md](open-questions.md) | Вопросы с постоянными идентификаторами |
+| [decisions.md](decisions.md) | Подтверждённые решения и предложения |
+| [architecture.md](architecture.md) | Архитектура всей платформы |
+| [core-architecture.md](core-architecture.md) | Модули и разделы ядра |
+
+## Дизайн интерфейса
+
+- [DESIGN.md](../DESIGN.md) — общий визуальный язык и токены.
+- [Оболочка](design/app-shell.md) — левое и верхнее меню, профиль и экосистема.
+- [Сотрудники](design/employees.md) — пример согласованного раздела и границы прототипов.
+- [Компоненты](design/components.md) — каталог готовых элементов и пути к реализации.
+- [Паттерны](design/patterns.md) — формы, списки, загрузка, ошибки и черновики.
+- [Предприятия](design/enterprises.md) — вкладки и применение компонентов в каталогах.
+- [Страница входа](design/login.md) — правила формы Keycloak.
+- [Тексты](design/content.md) — терминология и сообщения.
+
+## Правило источников
+
+Функциональность — `requirements.md` и `core-architecture.md`; первый этап — `mvp.md`; архитектура — соответствующие схемы и тексты; доступ — `access-model.md`; общий внешний вид — `DESIGN.md`, применение компонентов — `docs/design/`; точный HTTP-контракт после согласования — OpenAPI, см. `api-contracts.md`.
+
+Не копировать одинаковые определения в разные документы. При изменении решения обновлять его источник и связанные ссылки. Если документы противоречат друг другу, сопоставить их с актуальными указаниями пользователя и исправить противоречие.

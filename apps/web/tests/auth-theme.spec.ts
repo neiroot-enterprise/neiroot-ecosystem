@@ -72,19 +72,70 @@ test('Auth theme: two steps, real registration and phone/email login',async({pag
   }
  }
 });
-test('Auth theme: narrow screen, white fields, language and back to login',async({page})=>{
+for (const width of [1280,390]) {
+ test(`Registration shares the login design in both themes at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.goto(base);
+  await page.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();
+  const form=page.locator('#kc-register-form');
+  await expect(page.locator('#kc-header-wrapper')).toBeVisible();
+  await expect(page.locator('.neiroot-brand')).toHaveCount(0);
+  await expect(page.locator('.pf-v5-c-login__main')).toHaveCSS('padding','16px');
+  await expect(page.locator('.pf-v5-c-login__container')).toHaveCSS('max-width','384px');
+  await expect(form).toHaveCSS('gap','20px');
+  await page.getByRole('button',{name:'Далее',exact:true}).click();
+  await expect(page.locator('#lastName')).toBeFocused();
+  await page.locator('#lastName').fill('Тестовая');
+  await page.locator('#lastName').press('Tab');
+  await expect(page.locator('#firstName')).toBeFocused();
+  await page.locator('#firstName').fill('Регистрация');
+  for (const dark of [false,true]) {
+   if(dark) await page.getByRole('button',{name:'Включить тёмную тему'}).click();
+   await expect(page.locator('body')).toHaveCSS('background-color',dark?'rgb(17, 21, 18)':'rgb(246, 247, 248)');
+   const field=page.locator('#lastName').locator('..');
+   await expect(field).toHaveCSS('height','40px');
+   await expect(page.locator('#lastName')).toHaveCSS('font-size',width<768?'16px':'14px');
+   await page.screenshot({path:`test-results/registration-${width}-${dark?'dark':'light'}-step1.png`,fullPage:true});
+   await page.locator('#firstName').press('Enter');
+   await expect(page.locator('#username')).toBeFocused();
+   await expect(page.locator('#lastName')).toBeHidden();
+   const back=page.getByRole('button',{name:'Назад',exact:true});
+   const submit=page.getByRole('button',{name:'Зарегистрироваться',exact:true});
+   const backBox=(await back.boundingBox())!,submitBox=(await submit.boundingBox())!;
+   expect(backBox.y).toBe(submitBox.y);
+   await expect(submit).toHaveCSS('height','40px');
+   await page.locator('#password').fill('SyntheticThemeCheck!42');
+   await page.locator('#password-show-password').click();
+   await expect(page.locator('#password')).toHaveAttribute('type','text');
+   await page.screenshot({path:`test-results/registration-${width}-${dark?'dark':'light'}-step2.png`,fullPage:true});
+   await page.locator('#password-show-password').click();
+   await expect(page.locator('#password')).toHaveAttribute('type','password');
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+   await back.click();
+   await expect(page.locator('#lastName')).toHaveValue('Тестовая');
+  }
+  await page.getByRole('button',{name:'Включить светлую тему'}).click();
+  await page.getByRole('button',{name:'Язык',exact:true}).press('Space');
+  const list=page.getByRole('listbox',{name:'Язык',exact:true});
+  await expect(list).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button',{name:'Язык',exact:true})).toBeFocused();
+ });
+}
+
+test('Auth theme: narrow screen, Base Nova fields, language and back to login',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.emulateMedia({colorScheme:'dark'});
  await page.goto(base);await page.getByRole('link',{name:'Зарегистрироваться',exact:true}).click();
  await expect(page.locator('#lastName')).toBeVisible();
- expect(await page.locator('#lastName').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(255, 255, 255)');
+ await expect(page.locator('#lastName').locator('..')).toHaveCSS('background-color','rgb(255, 255, 255)');
  expect(await page.locator('.pf-v5-c-login__main').evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThan(300);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- const title=await page.locator('#kc-page-title').boundingBox(),lang=await page.locator('#login-select-toggle').boundingBox();expect(lang!.y+lang!.height).toBeLessThan(title!.y);
+ const title=await page.locator('#kc-page-title').boundingBox(),lang=await page.getByRole('button',{name:'Язык',exact:true}).boundingBox();expect(lang!.y+lang!.height).toBeLessThan(title!.y);
  await page.locator('#lastName').fill('Тест');await page.locator('#firstName').fill('Безотчества');
  await page.locator('#firstName').press('Enter');await expect(page.locator('#username')).toBeVisible();
  await expect(page.locator('#username')).toHaveValue('+7');
- expect(await page.locator('#username').evaluate(e=>getComputedStyle(e).height)).toBe('60px');
- expect(await page.getByRole('button',{name:'Зарегистрироваться',exact:true}).evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(143, 195, 158)');
+ expect(await page.locator('#username').evaluate(e=>getComputedStyle(e).height)).toBe('38px');
+ expect(await page.getByRole('button',{name:'Зарегистрироваться',exact:true}).evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(47, 125, 74)');
  await page.locator('#username').fill('+79990000000');await expect(page.locator('#username')).toHaveValue('+7 (999) 000-00-00');
  await page.locator('#username').press('Backspace');await expect(page.locator('#username')).toHaveValue('+7 (999) 000-00-0');
  await page.locator('#username').fill('+442079460123');await expect(page.locator('#username')).toHaveValue('+442079460123');
@@ -173,6 +224,12 @@ for (const width of [1280,390]) {
   await expect(theme).toHaveAccessibleName('Включить светлую тему');
   await expect(header).toHaveCSS('background-color','rgb(23, 28, 24)');
   await expect(page.locator('#username').locator('..')).not.toHaveCSS('background-color','rgb(255, 255, 255)');
+  await page.locator('#kc-login').focus();
+  await expect(page.locator('#kc-login')).toHaveCSS('outline-style','none');
+  await expect(page.locator('#kc-login')).toHaveCSS('border-color','rgb(101, 183, 126)');
+  await expect(page.locator('#kc-login')).toHaveCSS('box-shadow',/\/ 0\.5\) 0px 0px 0px 3px$/);
+  await page.getByRole('heading',{name:'Авторизация',exact:true}).click();
+  await page.screenshot({path:`test-results/login-base-nova-dark-${width}.png`,fullPage:true});
   await page.goto(base);
   await expect(theme).toHaveAccessibleName('Включить светлую тему');
   await theme.click();
@@ -208,6 +265,10 @@ for (const width of [1280,390]) {
   await expect(page.locator('.pf-v5-c-login__container')).toHaveCSS('max-width','384px');
   await expect(page.locator('#kc-login')).toHaveCSS('height','40px');
   await expect(page.locator('#kc-login')).toHaveCSS('background-color','rgb(47, 125, 74)');
+  await page.locator('#kc-login').focus();
+  await expect(page.locator('#kc-login')).toHaveCSS('outline-style','none');
+  await expect(page.locator('#kc-login')).toHaveCSS('border-color','rgb(47, 125, 74)');
+  await expect(page.locator('#kc-login')).toHaveCSS('box-shadow',/\/ 0\.5\) 0px 0px 0px 3px$/);
   await expect(page.locator('#username').locator('..')).toHaveCSS('height','40px');
   await expect(page.locator('#username')).toHaveCSS('font-size',width>=768 ? '14px' : '16px');
   await expect(page.locator('#username')).toHaveCSS('padding-inline-start','12px');
@@ -247,9 +308,11 @@ for (const width of [1280,390]) {
   await expect(error).toContainText('Неправильное имя пользователя или пароль');
   await expect(page.locator('#kc-header-wrapper')).toBeVisible();
   const control=page.locator('#username').locator('..');
-  const appearance=await control.evaluate(e=>({outline:getComputedStyle(e).outline,color:getComputedStyle(e).borderColor,background:getComputedStyle(e).backgroundColor}));
-  expect(appearance.outline).toBe('rgb(255, 77, 80) solid 2px');
-  expect(appearance.color).toBe('rgb(255, 77, 80)');expect(appearance.background).toBe('rgb(255, 255, 255)');
+  await expect(control).toHaveCSS('outline-style','none');
+  await expect(control).toHaveCSS('border-color','rgb(180, 35, 24)');
+  await expect(control).toHaveCSS('box-shadow',/\/ 0\.2\) 0px 0px 0px 3px$/);
+  await expect(control).toHaveCSS('background-color','rgb(255, 255, 255)');
+  await expect(error.locator('.kc-feedback-text')).toHaveCSS('color','rgb(180, 35, 24)');
   const icon=await error.evaluate(e=>({width:getComputedStyle(e,'::before').width,mask:getComputedStyle(e,'::before').maskImage,gap:getComputedStyle(e).gap}));
   expect(icon.width).toBe('16px');expect(icon.mask).toContain('data:image/svg+xml');expect(icon.gap).toBe('8px');
   const fieldBox=(await control.boundingBox())!,errorBox=(await error.boundingBox())!;
@@ -259,5 +322,11 @@ for (const width of [1280,390]) {
   await expect(page.locator('#neiroot-login-error')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:`test-results/login-reference-error-${width}.png`,fullPage:true});
+  await page.getByRole('button',{name:'Включить тёмную тему'}).click();
+  await expect(error.locator('.kc-feedback-text')).toHaveCSS('color','rgb(240, 113, 103)');
+  await expect(control).toHaveCSS('outline-style','none');
+  expect(await control.evaluate(e=>getComputedStyle(e).boxShadow)).toContain('0px 0px 0px 3px');
+  await expect(page.locator('#username')).toHaveValue(/missing-.*@example.test/);
+  await page.screenshot({path:`test-results/login-base-nova-dark-error-${width}.png`,fullPage:true});
  });
 }
