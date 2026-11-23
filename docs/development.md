@@ -48,7 +48,7 @@ go fmt ./internal/contracts
 
 ## Общие ресурсы интерфейса
 
-Общие правила дизайна — [DESIGN.md](../DESIGN.md). Текущие семантические значения светлой и тёмной темы web находятся в `apps/web/src/shared/styles/theme.css`, подключение Tailwind — в `globals.css`. Прежний набор `docs/design/tokens.css` обслуживает старые ресурсы, включая тему Keycloak. После намеренного изменения этого набора выполнить `node scripts/sync-design.cjs`: обновляются его копии в web, общедоступный CSS и тема Keycloak. Этот скрипт не синхронизирует новую тему web с DESIGN.md. При изменении собственных CSS/JS/PNG повышать версию ресурсов в `theme.properties` и Brand: изменение серверного кеша не очищает кеш браузера.
+Общие правила дизайна — [DESIGN.md](../DESIGN.md). Текущие семантические значения светлой и тёмной темы web находятся в `apps/web/src/shared/styles/theme.css`, подключение Tailwind — в `globals.css`. При изменении собственных CSS/JS/PNG повышать версию ресурсов в `theme.properties` и Brand: изменение серверного кеша не очищает кеш браузера.
 
 ## Схемы и зависимости
 

@@ -33,7 +33,18 @@ func matchingFlowCookie(r *http.Request, state string) (string, bool) {
 
 var authErrorPage = template.Must(template.New("auth-error").Parse(`<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повторный вход — Neiroot</title>
-<link rel="stylesheet" href="/neiroot-tokens.css?v=20261005-3"><style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#f5f7fa;color:#27313f;font:16px/1.5 Arial,sans-serif}main{width:100%;max-width:460px;padding:32px;background:white;border:1px solid #e1e8f0;border-radius:24px;box-shadow:0 16px 40px #1a2c451a}img{display:block;width:260px;max-width:100%;height:auto;margin:0 auto 28px}h1{font-size:24px;text-align:center}p{color:#5d6b7e}a{display:block;text-align:center;background:var(--color-primary);color:white;padding:12px;border-radius:var(--radius-button);text-decoration:none;font-weight:600}a:focus-visible{outline:2px solid #123d83;outline-offset:3px}small{display:block;margin-top:20px;color:#5d6b7e;overflow-wrap:anywhere}</style></head>
+<style>
+:root { color-scheme:light }
+* { box-sizing:border-box }
+body { margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px; background:#f6f7f8; color:#171a1f; font:16px/1.5 Arial,sans-serif }
+main { width:100%; max-width:460px; padding:32px; background:white; border:1px solid #e1e5e9; border-radius:12px; box-shadow:0 16px 40px #1a2c451a }
+img { display:block; width:260px; max-width:100%; height:auto; margin:0 auto 28px }
+h1 { font-size:24px; text-align:center }
+p { color:#66706a }
+a { display:block; text-align:center; background:#2f7d4a; color:white; padding:12px; border-radius:10px; text-decoration:none; font-weight:600 }
+a:focus-visible { outline:2px solid #2f7d4a; outline-offset:3px }
+small { display:block; margin-top:20px; color:#66706a; overflow-wrap:anywhere }
+</style></head>
 <body><main><img src="/neiroot-wordmark.png?v=20261005-2" alt="NEIROOT"><h1>Повторите вход</h1><p>{{.Message}}</p><a href="/api/auth/login">Войти снова</a>{{if .RequestID}}<small>Номер обращения: {{.RequestID}}</small>{{end}}</main></body></html>`))
 
 func writeAuthError(w http.ResponseWriter, r *http.Request, err error) {

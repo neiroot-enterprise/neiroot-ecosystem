@@ -39,6 +39,14 @@
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 
+/* Keycloak supplies the layout of auxiliary account pages. */
+.neiroot-brand img {
+  display: block;
+  width: min(100%, 230px);
+  height: auto;
+  margin: 0 auto 24px;
+}
+
 /* Sign-in and registration share Neiroot's Base Nova palette. */
 body:has(:is(#kc-form-login, #kc-register-form)) {
   --sign-in-background: #f6f7f8;
@@ -63,7 +71,14 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
   color: var(--sign-in-foreground);
   font: 14px/20px var(--font-family) !important;
 
+  & [hidden] { display: none !important; }
+  & .password-eye-slash { display: none; }
+  & [data-password-toggle]:has(i.fa-eye-slash) .password-eye-slash { display: block; }
+
   & .pf-v5-c-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--sign-in-background) !important;
     color: var(--sign-in-foreground);
     font-family: inherit !important;
@@ -72,10 +87,15 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
   }
 
   & .pf-v5-c-login__container {
+    display: block;
+    width: 100%;
+    padding: 0;
     max-width: 384px !important;
   }
 
   & .pf-v5-c-login__main {
+    width: 100%;
+    min-width: 0;
     padding: 16px !important;
     border: 1px solid var(--sign-in-border);
     border-radius: 12px !important;
@@ -124,7 +144,13 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
     }
   }
 
+  & .pf-v5-c-login__main-body {
+    padding: 0;
+  }
+
   & .pf-v5-c-login__main-header {
+    display: block;
+    padding: 0;
     position: static;
     width: auto;
     height: auto;
@@ -282,6 +308,13 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
     background: var(--sign-in-hover) !important;
   }
 
+  & [data-password-toggle]::before,
+  & [data-password-toggle]::after,
+  & .pf-v5-c-input-group__item:last-child::before,
+  & .pf-v5-c-input-group__item:last-child::after {
+    display: none;
+  }
+
   & :is(#kc-form-login, #kc-register-form) [data-password-toggle] svg {
     width: 16px;
     height: 16px;
@@ -365,12 +398,14 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
     }
 
     & .neiroot-progress {
+      text-align: center;
       margin: 0;
       color: var(--sign-in-muted);
       font: 400 14px/20px var(--font-family);
     }
 
     & .neiroot-step {
+      display: grid;
       gap: 20px;
       min-width: 0;
     }
@@ -382,7 +417,13 @@ body:has(:is(#kc-form-login, #kc-register-form)) {
     }
 
     & .neiroot-step-actions {
+      display: flex;
+      gap: 12px;
       margin: 0;
+    }
+
+    & .neiroot-step-actions .pf-m-primary {
+      width: 100%;
     }
 
     & .neiroot-secondary {

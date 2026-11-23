@@ -279,10 +279,12 @@ test("Real company UI: tree, assignments, organizations, archive, access and mob
           ).parentId,
       )
       .toBeNull();
-    const rootPosition = (await row("Разработка").boundingBox())!,
-      otherRoot = (await row("Дирекция").boundingBox())!;
-    expect(rootPosition.x).toBeCloseTo(otherRoot.x, 0);
-    expect(rootPosition.width).toBeCloseTo(otherRoot.width, 0);
+    await expect(async () => {
+      const rootPosition = (await row("Разработка").boundingBox())!;
+      const otherRoot = (await row("Дирекция").boundingBox())!;
+      expect(rootPosition.x).toBeCloseTo(otherRoot.x, 0);
+      expect(rootPosition.width).toBeCloseTo(otherRoot.width, 0);
+    }).toPass({ timeout: 5000 });
     await indentation("Разработка", leafName, 24);
     await row("Разработка")
       .locator(".drag-handle")

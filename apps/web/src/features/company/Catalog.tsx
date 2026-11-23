@@ -3,11 +3,11 @@ import { ListHeader } from '@/shared/ui/list-header';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { ListPagination } from '@/shared/ui/list-pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
-import {useContext,useEffect,useRef,useState,type CSSProperties,type DragEvent} from 'react';
+import {useEffect,useRef,useState,type CSSProperties,type DragEvent} from 'react';
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {api,canManage,type Tenant,type EmployeeList} from '../../shared/api/client';
-import {ModernCatalog, CatalogButton, CatalogInput, CatalogPanel, CatalogModal as Modal} from './catalog-ui';
+import {CatalogButton, CatalogInput, CatalogPanel, CatalogModal as Modal} from './catalog-ui';
 import {ChevronDown, ChevronRight, GripVertical} from 'lucide-react';
 import './catalog.css';
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from '@/shared/ui/table';
@@ -35,7 +35,7 @@ function QueryError({error,retry}:{error:unknown;retry:()=>void}){return error?<
 
 export function CatalogPage({tenant,kind,onDirty}:{tenant:Tenant;kind:Kind;onDirty:Dirty}){
  const location=useLocation(),id=location.pathname.split('/')[3];
- return <ModernCatalog value={true}><div className="enterprise-ui">{kind==='businesses'&&id==='departments'?<DepartmentDirectory tenant={tenant} onDirty={onDirty}/>:id?<CatalogCard key={`${kind}:${id}`} tenant={tenant} kind={kind} id={id} onDirty={onDirty}/>:<CatalogList key={kind} tenant={tenant} kind={kind} onDirty={onDirty}/>}</div></ModernCatalog>;
+ return <div className="enterprise-ui">{kind==='businesses'&&id==='departments'?<DepartmentDirectory tenant={tenant} onDirty={onDirty}/>:id?<CatalogCard key={`${kind}:${id}`} tenant={tenant} kind={kind} id={id} onDirty={onDirty}/>:<CatalogList key={kind} tenant={tenant} kind={kind} onDirty={onDirty}/>}</div>;
 }
 function CatalogList({tenant,kind,onDirty}:{tenant:Tenant;kind:Kind;onDirty:Dirty}){
  const navigate=useNavigate();const[search,setSearch]=useState(''),[status,setStatus]=useState('active'),[offset,setOffset]=useState(0),[creating,setCreating]=useState(false),[pageSize,setPageSize]=useState(25);
@@ -102,8 +102,8 @@ function NameDialog({title:heading,initial,organization=false,onDirty=noop,onSav
  const[name,setName]=useState(initial?.name||''),[inn,setInn]=useState(initial?.inn||''),[error,setError]=useState<unknown>(),[saving,setSaving]=useState(false);const key=useRef(crypto.randomUUID());
  const dirty=name!==(initial?.name||'')||inn!==(initial?.inn||'');
  useEffect(()=>{onDirty(dirty);return()=>onDirty(false)},[dirty,onDirty]);
- const modern=useContext(ModernCatalog),[discard,setDiscard]=useState(false);
- const close=()=>{if(saving)return;if(!dirty)onClose();else if(modern)setDiscard(true);else if(window.confirm('Отменить несохранённые изменения?'))onClose()};
+ const [discard,setDiscard]=useState(false);
+ const close=()=>{if(saving)return;if(!dirty)onClose();else setDiscard(true)};
  return <><Modal title={heading} onClose={close}><form onSubmit={async e=>{e.preventDefault();setSaving(true);setError(undefined);try{await onSave({name:name.trim(),...(organization?{inn}: {})},key.current)}catch(err){setError(err)}finally{setSaving(false)}}}><div className="field"><label htmlFor="catalog-name">Наименование</label><CatalogInput id="catalog-name" autoFocus required maxLength={200} value={name} onChange={e=>setName(e.target.value)}/></div>{organization&&<div className="field"><label htmlFor="catalog-inn">ИНН</label><CatalogInput id="catalog-inn" required inputMode="numeric" pattern="([0-9]{10}|[0-9]{12})" maxLength={12} value={inn} onChange={e=>setInn(e.target.value)} aria-describedby="inn-help"/><small id="inn-help">10 цифр для юридического лица или 12 для ИП.</small></div>}<ErrorMessage error={error}/><div className="form-actions"><CatalogButton className="button primary" disabled={saving||!name.trim()}>{saving?'Сохраняем…':'Сохранить'}</CatalogButton><CatalogButton type="button" className="button" disabled={saving} onClick={close}>Отмена</CatalogButton></div></form></Modal>{discard&&<Modal confirmation title="Отменить изменения?" onClose={()=>setDiscard(false)}><p>Несохранённые изменения будут потеряны.</p><div className="form-actions"><CatalogButton className="button danger" onClick={onClose}>Отменить</CatalogButton><CatalogButton className="button" onClick={()=>setDiscard(false)}>Продолжить редактирование</CatalogButton></div></Modal>}</>;
 }
 function ArchiveDialog({name,onSave,onClose}:{name:string;onSave:()=>Promise<void>;onClose:()=>void}){

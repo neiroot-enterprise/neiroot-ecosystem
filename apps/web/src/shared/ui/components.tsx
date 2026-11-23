@@ -9,12 +9,6 @@ import {
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -122,41 +116,6 @@ export function ActionsMenu({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export function Modal({
-  title,
-  children,
-  onClose,
-  drawer = false,
-}: {
-  title: string;
-  children: ReactNode;
-  onClose: () => void;
-  drawer?: boolean;
-}) {
-  return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent
-        className={cn(
-          "legacy-ui",
-          drawer
-            ? "top-14 bottom-0 left-0 h-auto max-h-none w-72 max-w-[calc(100%-2rem)] translate-x-0 translate-y-0 rounded-none rounded-r-xl sm:max-w-72"
-            : "max-h-[min(90svh,720px)] overflow-y-auto sm:max-w-lg",
-        )}
-      >
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        {children}
-      </DialogContent>
-    </Dialog>
   );
 }
 

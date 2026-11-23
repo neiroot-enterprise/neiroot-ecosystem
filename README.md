@@ -18,7 +18,7 @@
 
 - [Общая UML-схема](docs/diagrams/architecture.svg) и [схема ядра](docs/diagrams/core-architecture.svg).
 - [PDF платформы](output/pdf/neiroot-saas-architecture.pdf) и [PDF ядра](output/pdf/neiroot-core-architecture.pdf).
-- [Дизайн-токены](docs/design/tokens.css) и [исходный логотип](docs/design/brand/neiroot-logo-source.png).
+- [Тема интерфейса](apps/web/src/shared/styles/theme.css) и [исходный логотип](docs/design/brand/neiroot-logo-source.png).
 - [Прозрачная надпись NEIROOT](docs/design/brand/neiroot-wordmark.png) для страниц входа и шапки приложения.
 
 [Карта источников](docs/index.md#правило-источников).
