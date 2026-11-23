@@ -6,7 +6,7 @@
 
 Веб-интерфейс — React и TypeScript. Зафиксированы React 19.3.0, TypeScript 7.0.2, Vite 8.3.6, Tailwind CSS и Vite-плагин 4.3.5, shadcn CLI 4.23.0 с `base-nova`/Base UI 1.9.0, TanStack Table 9.3.1, Onest Variable 5.3.1 и Lucide React 1.50.0. Также используются React Router, TanStack Query, React Hook Form и Zod. Точные версии и транзитивные зависимости — `apps/web/package-lock.json`; плавающие версии не допускаются.
 
-Tailwind подключён через официальный Vite-плагин и `@import "tailwindcss"`. shadcn-компоненты являются исходным кодом проекта в `src/shared/ui`, а общие функции — в `src/shared/lib`; alias `@/*` одинаково настроен в TypeScript и Vite. Lucide React остаётся единым набором иконок. Глобальные стили разделены на Tailwind layers и семантические CSS-переменные; прежний CSS ограничен классом `.legacy-ui` и не должен влиять на новые компоненты.
+Tailwind подключён через официальный Vite-плагин и `@import "tailwindcss"`. shadcn-компоненты являются исходным кодом проекта в `src/shared/ui`, а общие функции — в `src/shared/lib`; alias `@/*` одинаково настроен в TypeScript и Vite. Lucide React остаётся единым набором иконок. Глобальные стили разделены на Tailwind layers и семантические CSS-переменные. Стили дерева назначений подключает компонент EmployeeAssignments.
 
 Бизнес-правила и окончательные проверки прав выполняются сервером. Клиент отвечает за понятную навигацию, ввод, отображение результатов и состояний, а не за расчёты финансов вместо домена.
 

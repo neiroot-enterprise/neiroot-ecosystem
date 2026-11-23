@@ -1,3 +1,4 @@
+import "./employee-assignments.css";
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import "@fontsource-variable/geist";
 import { useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";

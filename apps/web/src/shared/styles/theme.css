@@ -27,31 +27,6 @@
   --sidebar-border: #e1e5e9;
   --sidebar-ring: #2f7d4a;
   --brand-soft: #8fc39e;
-
-  /* Compatibility for screens that have not been redesigned yet. */
-  --color-bg: var(--background);
-  --color-surface: var(--card);
-  --color-border: var(--border);
-  --color-text: var(--foreground);
-  --color-text-muted: var(--muted-foreground);
-  --color-primary: var(--primary);
-  --color-primary-text: var(--primary-foreground);
-  --color-primary-hover: #25663c;
-  --color-selected-bg: var(--accent);
-  --color-selected-indicator: var(--primary);
-  --color-danger: var(--destructive);
-  --color-tag-bg: var(--muted);
-  --color-status-blue: #e8f1fc;
-  --color-status-teal: #e7f4f2;
-  --color-status-purple: #f0eaf9;
-  --color-status-green: #eaf5ea;
-  --color-status-red: #fcecec;
-  --color-focus: var(--ring);
-  --color-control-border: var(--input);
-  --color-control-hover: #bdc8c0;
-  --color-placeholder: #8a948e;
-  --color-overlay: rgb(0 0 0 / 32%);
-  --font-family: "Onest Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -82,13 +57,4 @@
   --sidebar-border: #2b332d;
   --sidebar-ring: #65b77e;
   --brand-soft: #8fc39e;
-  --color-primary-hover: #7ac78f;
-  --color-status-blue: #1b3044;
-  --color-status-teal: #183a35;
-  --color-status-purple: #342944;
-  --color-status-green: #20382a;
-  --color-status-red: #442421;
-  --color-control-hover: #536158;
-  --color-placeholder: #829087;
-  --color-overlay: rgb(0 0 0 / 64%);
 }

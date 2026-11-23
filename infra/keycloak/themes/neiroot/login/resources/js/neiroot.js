@@ -144,14 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
     main.prepend(brand);
   }
   const language = document.querySelector('.pf-v5-c-login__main-header-utilities');
-  if (language) {
+  if (language && header) {
     language.classList.add('neiroot-language');
-    (header ?? document.body).append(language);
-    if (header) {
-      const label = document.documentElement.lang.startsWith('ru') ? 'Язык' : 'Language';
-      const select = language.querySelector('select');
-      if (select) enhanceLanguageSelect(select, label);
-    }
+    header.append(language);
+    const label = document.documentElement.lang.startsWith('ru') ? 'Язык' : 'Language';
+    const select = language.querySelector('select');
+    if (select) enhanceLanguageSelect(select, label);
   }
 
   if (header) addSignInThemeToggle(header);

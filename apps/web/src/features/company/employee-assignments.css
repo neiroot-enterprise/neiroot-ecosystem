@@ -1,0 +1,49 @@
+@layer components {
+  .employee-assignments {
+    --employee-tree-line: color-mix(in srgb, var(--border) 88%, var(--foreground));
+  }
+
+  .employee-assignment-tree {
+    margin-top: 0.25rem;
+    margin-inline-start: 0.625rem;
+    padding-inline-start: calc(0.75rem + 1px);
+  }
+
+  .employee-assignment-node {
+    position: relative;
+    padding-block: 0.125rem;
+  }
+
+  .employee-assignment-empty {
+    position: relative;
+    height: 1.5rem;
+    margin-top: 0.25rem;
+    margin-inline-start: 0.625rem;
+  }
+
+  .employee-assignment-node::before,
+  .employee-assignment-empty::before {
+    position: absolute;
+    inset-inline-start: calc(-0.75rem - 1px);
+    top: 0;
+    width: calc(0.5rem + 1px);
+    height: calc(0.8rem + 1px);
+    border-inline-start: 1px solid var(--employee-tree-line);
+    border-block-end: 1px solid var(--employee-tree-line);
+    content: "";
+  }
+
+  .employee-assignment-empty::before {
+    inset-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .employee-assignment-node:not(:last-child)::after {
+    position: absolute;
+    inset-inline-start: calc(-0.75rem - 1px);
+    top: calc(0.8rem + 1px);
+    bottom: 0;
+    border-inline-start: 1px solid var(--employee-tree-line);
+    content: "";
+  }
+}
