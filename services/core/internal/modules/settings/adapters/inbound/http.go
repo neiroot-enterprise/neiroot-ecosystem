@@ -10,7 +10,10 @@ import (
 	"net/http"
 )
 
-type HTTP struct{ Service *app.Service }
+type HTTP struct {
+	Service    *app.Service
+	Navigation *app.NavigationService
+}
 
 func tenantDTO(t domain.Tenant) contracts.Tenant {
 	return contracts.Tenant{ID: t.ID, Name: t.Name, Role: contracts.Role(t.Role)}
@@ -86,6 +89,7 @@ func (h HTTP) Protected(r chi.Router) {
 	})
 }
 func (h HTTP) Tenant(r chi.Router) {
+	h.navigationRoutes(r)
 	r.Patch("/employees/{employeeId:[0-9a-f-]{36}}/role", func(w http.ResponseWriter, r *http.Request) {
 		var input contracts.RoleInput
 		if err := platform.Decode(w, r, &input); err != nil {

@@ -22,7 +22,7 @@ async function main() {
   try {
     const page = await browser.newPage();
     await page.setContent(`<!doctype html><html lang="ru"><head><meta charset="utf-8">
-      <title>Neiroot - ${basename === 'architecture' ? 'архитектура SaaS' : 'ядро приложения'} v${model.version}</title><style>
+      <title>Neiroot Ecosystem - ${basename === 'architecture' ? 'архитектура SaaS' : 'ядро приложения'} v${model.version}</title><style>
       @page { size: ${width}pt ${height}pt; margin: 0; }
       html, body { margin: 0; padding: 0; width: ${width}pt; height: ${height}pt; }
       body { background: #171717; print-color-adjust: exact; -webkit-print-color-adjust: exact; }

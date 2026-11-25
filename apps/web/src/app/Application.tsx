@@ -3,35 +3,16 @@ import {
   useEffect,
   useRef,
   useState,
-  type ComponentType,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useBlocker, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useBlocker, useLocation, useNavigate } from "react-router-dom";
 import {
-  Banknote,
   Bell,
-  Building2,
-  ChevronDown,
   ChevronsUpDown,
-  ClipboardCheck,
   Construction,
-  Factory,
-  FileText,
-  HandCoins,
-  Handshake,
-  Landmark,
   LogOut,
   Network,
-  Package,
-  Receipt,
-  Settings,
-  ShieldCheck,
-  ShoppingBag,
-  SlidersHorizontal,
   UserRound,
-  Users,
-  Wallet,
-  type LucideIcon,
 } from "lucide-react";
 import {
   api,
@@ -73,11 +54,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { NotificationsPage, notificationsPath, ProfilePage, profilePath } from "./account-pages";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/shared/ui/collapsible";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -87,12 +63,8 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
@@ -115,74 +87,10 @@ import {
   EmployeeCard,
 } from "@/features/company/Employees";
 import { EmployeeConfirmationSheet } from "@/features/company/employee-confirmation-sheet";
+import { modules, type Module } from "./navigation-model";
+import { NavigationMenu } from "./navigation-menu";
 import { CatalogPage } from "@/features/company/Catalog";
 
-type Module = {
-  id: string;
-  name: string;
-  icon: LucideIcon;
-  sections: readonly (readonly [string, string])[];
-};
-const modules: Module[] = [
-  {
-    id: "money",
-    name: "Деньги",
-    icon: Wallet,
-    sections: [
-      ["cash", "Касса"],
-      ["banks", "Банки"],
-      ["loans", "Кредиты и займы"],
-      ["payroll", "Зарплата"],
-    ],
-  },
-  {
-    id: "company",
-    name: "Моя компания",
-    icon: Building2,
-    sections: [
-      ["employees", "Сотрудники"],
-      ["businesses", "Предприятия"],
-      ["organizations", "Организации"],
-      ["contracts", "Договоры"],
-      ["counterparties", "Контрагенты"],
-      ["catalog", "Номенклатура"],
-    ],
-  },
-  {
-    id: "sales",
-    name: "Продажи",
-    icon: ShoppingBag,
-    sections: [
-      ["invoices", "Счета на оплату"],
-      ["acts", "Акты выполненных работ"],
-    ],
-  },
-  {
-    id: "settings",
-    name: "Настройки",
-    icon: Settings,
-    sections: [
-      ["fields", "Поля"],
-      ["access", "Права доступа"],
-    ],
-  },
-];
-const sectionIcons: Record<string, LucideIcon> = {
-  employees: Users,
-  businesses: Factory,
-  organizations: Building2,
-  contracts: FileText,
-  counterparties: Handshake,
-  catalog: Package,
-  cash: Wallet,
-  banks: Landmark,
-  loans: HandCoins,
-  payroll: Banknote,
-  invoices: Receipt,
-  acts: ClipboardCheck,
-  fields: SlidersHorizontal,
-  access: ShieldCheck,
-};
 const subSections: Record<string, string[]> = {
   cash: ["Список касс", "Движение по кассе"],
   banks: ["Банковские счета", "Движение по счетам"],
@@ -282,7 +190,7 @@ export function Application() {
     return (
       <FullPage>
         <Busy
-          text={switching ? "Переключаем экосистему…" : "Загрузка Neiroot…"}
+          text={switching ? "Переключаем экосистему…" : "Загрузка Neiroot Ecosystem…"}
         />
       </FullPage>
     );
@@ -293,7 +201,7 @@ export function Application() {
           <CardHeader>
             <Brand />
             <CardTitle className="pt-4 text-xl">
-              Не удалось открыть Neiroot
+              Не удалось открыть Neiroot Ecosystem
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -327,9 +235,11 @@ export function Application() {
         fullName={me.fullName}
       />
     );
+  if (location.pathname === "/") return <Navigate to="/company/employees" replace />;
+  if (location.pathname === "/company/catalog" || location.pathname === "/company/catalog/") return <Navigate to={"/sales/catalog" + location.search + location.hash} replace />;
   const segments = location.pathname.split("/").filter(Boolean);
   const selected =
-    modules.find((module) => module.id === segments[0]) || modules[1];
+    modules.find((module) => module.id === segments[0]) || modules[0];
   const section =
     selected.sections.find((item) => item[0] === segments[1]) ||
     selected.sections[0];
@@ -350,6 +260,7 @@ export function Application() {
     >
       <AppSidebar
         me={me}
+        tenantId={tenant.id}
         selected={isAccountPage ? undefined : selected}
         sectionId={section[0]}
         onLogout={logout}
@@ -575,21 +486,21 @@ function AppHeader({
 }
 
 function AppSidebar({
+  tenantId,
   me,
   selected,
   sectionId,
   onLogout,
 }: {
+  tenantId: string;
   me: Extract<Session, { authenticated: true }>;
   selected: Module | undefined;
   sectionId: string;
   onLogout: () => void;
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { state, setOpenMobile, isMobile } = useSidebar();
   const compactProfile = state === "collapsed" && !isMobile;
-  const [openModule, setOpenModule] = useState(selected?.id ?? "");
   const nameParts = [me.lastName?.trim() ?? "", me.firstName?.trim() ?? ""].filter(
     Boolean,
   );
@@ -610,7 +521,6 @@ function AppSidebar({
       </AvatarFallback>
     </Avatar>
   );
-  useEffect(() => { if (selected) setOpenModule(selected.id); }, [selected]);
   const follow = (path: string) => {
     if (isMobile) setOpenMobile(false);
     navigate(path);
@@ -627,86 +537,7 @@ function AppSidebar({
         <SidebarGroup>
           <SidebarGroupLabel>Разделы</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-px">
-              {modules.map((module) => {
-                const Icon = module.icon;
-                const open = openModule === module.id;
-                return (
-                  <SidebarMenuItem key={module.id}>
-                    <Collapsible
-                      open={open}
-                      onOpenChange={(next) =>
-                        setOpenModule(next ? module.id : "")
-                      }
-                    >
-                      <SidebarMenuButton
-                        tooltip={module.name}
-                        isActive={module.id === selected?.id}
-                        className="group-has-[[data-sidebar=menu-action]:hover]/menu-item:bg-sidebar-accent group-has-[[data-sidebar=menu-action]:hover]/menu-item:text-sidebar-accent-foreground"
-                        onClick={() => {
-                          if (state === "collapsed")
-                            follow(`/${module.id}/${module.sections[0][0]}`);
-                          else setOpenModule(open ? "" : module.id);
-                        }}
-                      >
-                        <Icon />
-                        <span>{module.name}</span>
-                      </SidebarMenuButton>
-                      <CollapsibleTrigger
-                        render={
-                          <SidebarMenuAction
-                            className="hover:bg-transparent hover:text-sidebar-accent-foreground"
-                            aria-label={
-                              open ? "Свернуть раздел" : "Раскрыть раздел"
-                            }
-                            aria-expanded={open}
-                          />
-                        }
-                      >
-                        <ChevronDown
-                          className={
-                            open
-                              ? "rotate-180 transition-transform"
-                              : "transition-transform"
-                          }
-                        />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {module.sections.map(([id, name]) => {
-                            const SectionIcon = sectionIcons[
-                              id
-                            ] as ComponentType<{ className?: string }>;
-                            const active =
-                              module.id === selected?.id && id === sectionId;
-                            const path = `/${module.id}/${id}`;
-                            return (
-                              <SidebarMenuSubItem key={id}>
-                                <SidebarMenuSubButton
-                                  render={
-                                    <Link
-                                      to={path}
-                                      onClick={() => {
-                                        if (isMobile) setOpenMobile(false);
-                                      }}
-                                    />
-                                  }
-                                  isActive={active}
-                                  aria-current={active ? "page" : undefined}
-                                >
-                                  <SectionIcon />
-                                  <span>{name}</span>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            );
-                          })}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <NavigationMenu key={me.subject + ":" + tenantId} subject={me.subject} tenantId={tenantId} selectedId={selected?.id} sectionId={sectionId} onFollow={follow} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

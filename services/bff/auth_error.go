@@ -32,7 +32,7 @@ func matchingFlowCookie(r *http.Request, state string) (string, bool) {
 }
 
 var authErrorPage = template.Must(template.New("auth-error").Parse(`<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повторный вход — Neiroot</title>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Повторный вход — Neiroot Ecosystem</title>
 <style>
 :root { color-scheme:light }
 * { box-sizing:border-box }

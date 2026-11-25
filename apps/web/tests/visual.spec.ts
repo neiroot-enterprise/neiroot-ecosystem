@@ -52,6 +52,13 @@ async function fixture(page: Page, role = "owner", employees = [employee]) {
       await route.fulfill({ status: 204 });
       return;
     }
+    if (path.endsWith("/me/navigation")) {
+      await route.fulfill({ json: { modules: ["company", "money", "sales", "settings"], sections: {
+        company: ["structure", "businesses", "employees", "organizations", "contracts", "counterparties", "partners"],
+        money: ["cash", "banks", "loans", "payroll"], sales: ["invoices", "acts", "catalog"], settings: ["fields", "access"],
+      } } });
+      return;
+    }
     if (path.endsWith("/employees") && request.method() === "GET") {
       await route.fulfill({
         json: {

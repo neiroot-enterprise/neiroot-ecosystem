@@ -1,0 +1,9 @@
+
+# Response annotations:
+Each item contains text selected from an earlier Codex response and may include a user comment. Treat items as Annotation 1, Annotation 2, and so on in array order. Use every selection as context and address every comment. For every annotation you address, include `:codex-annotation{index="N" id="ID"}`, where N is its one-based array position and ID is its exact id (omit the id attribute if absent). Do not use unstructured annotation labels.
+<response-annotations>
+[{"id":"731af88e-f773-4355-9473-33182de3dcb0","text":"Вы хотите предусмотреть оба варианта — личный инструмент человека и частный инструмент предприятия?","annotation":"Нет, мы здесь всё-таки думаем, что это должно быть как инструмент предприятия всего, то есть там личных каких-то инструментов, потому что он там может наделать личных инструментов, которые будут противоречить деятельности предприятия. И тогда экосистема превратится не в экосистему, а в помойку какую-то. То есть, да, где партнёры не будут понимать, что у них там на предприятии творится","source":{"messageId":"msg_0aa5ac1303da3c4e016b069b8cacc487d284e9ef61e9c9292d","startOffset":1475,"endOffset":1575}}]
+</response-annotations>
+
+## My request:
+

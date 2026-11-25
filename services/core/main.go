@@ -53,7 +53,7 @@ func main() {
 		w.WriteHeader(204)
 	})
 	r.Get("/metrics", platform.Metrics)
-	sh := settingsHTTP.HTTP{Service: settings}
+	sh := settingsHTTP.HTTP{Service: settings, Navigation: &settingsApp.NavigationService{Repo: &settingsPG.NavigationRepository{DB: db}, Tx: db, Access: settings}}
 	ch := companyHTTP.HTTP{Service: company, Catalog: &companyApp.CatalogService{Repo: &companyPG.Repository{DB: db}, Tx: db, Access: settings}}
 	sh.Public(r)
 	r.Group(func(r chi.Router) {

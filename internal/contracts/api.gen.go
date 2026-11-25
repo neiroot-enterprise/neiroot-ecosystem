@@ -224,6 +224,30 @@ func (e GetEmployeeAssignmentsParamsStatus) Valid() bool {
 	}
 }
 
+// Defines values for SaveNavigationSectionsParamsModuleId.
+const (
+	Company  SaveNavigationSectionsParamsModuleId = "company"
+	Money    SaveNavigationSectionsParamsModuleId = "money"
+	Sales    SaveNavigationSectionsParamsModuleId = "sales"
+	Settings SaveNavigationSectionsParamsModuleId = "settings"
+)
+
+// Valid indicates whether the value is a known member of the SaveNavigationSectionsParamsModuleId enum.
+func (e SaveNavigationSectionsParamsModuleId) Valid() bool {
+	switch e {
+	case Company:
+		return true
+	case Money:
+		return true
+	case Sales:
+		return true
+	case Settings:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListorganizationsParamsStatus.
 const (
 	ListorganizationsParamsStatusActive   ListorganizationsParamsStatus = "active"
@@ -429,6 +453,17 @@ type MoveDepartmentInput struct {
 	ParentId *openapi_types.UUID `json:"parentId"`
 }
 
+// NavigationOrder defines model for NavigationOrder.
+type NavigationOrder struct {
+	Items []string `json:"items"`
+}
+
+// NavigationPreferences defines model for NavigationPreferences.
+type NavigationPreferences struct {
+	Modules  []string            `json:"modules"`
+	Sections map[string][]string `json:"sections"`
+}
+
 // OnboardingInput defines model for OnboardingInput.
 type OnboardingInput struct {
 	Name string `json:"name"`
@@ -563,6 +598,19 @@ type GetEmployeeAssignmentsParams struct {
 // GetEmployeeAssignmentsParamsStatus defines parameters for GetEmployeeAssignments.
 type GetEmployeeAssignmentsParamsStatus string
 
+// SaveNavigationModulesParams defines parameters for SaveNavigationModules.
+type SaveNavigationModulesParams struct {
+	XCSRFToken string `json:"X-CSRF-Token"`
+}
+
+// SaveNavigationSectionsParams defines parameters for SaveNavigationSections.
+type SaveNavigationSectionsParams struct {
+	XCSRFToken string `json:"X-CSRF-Token"`
+}
+
+// SaveNavigationSectionsParamsModuleId defines parameters for SaveNavigationSections.
+type SaveNavigationSectionsParamsModuleId string
+
 // ListorganizationsParams defines parameters for Listorganizations.
 type ListorganizationsParams struct {
 	Status *ListorganizationsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
@@ -631,6 +679,12 @@ type UpdateEmployeeAssignmentsJSONRequestBody = UpdateEmployeeAssignmentsInput
 
 // ChangeEmployeeRoleJSONRequestBody defines body for ChangeEmployeeRole for application/json ContentType.
 type ChangeEmployeeRoleJSONRequestBody = RoleInput
+
+// SaveNavigationModulesJSONRequestBody defines body for SaveNavigationModules for application/json ContentType.
+type SaveNavigationModulesJSONRequestBody = NavigationOrder
+
+// SaveNavigationSectionsJSONRequestBody defines body for SaveNavigationSections for application/json ContentType.
+type SaveNavigationSectionsJSONRequestBody = NavigationOrder
 
 // CreateOrganizationJSONRequestBody defines body for CreateOrganization for application/json ContentType.
 type CreateOrganizationJSONRequestBody = OrganizationInput

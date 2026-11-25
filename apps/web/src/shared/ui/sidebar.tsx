@@ -196,7 +196,7 @@ function Sidebar({
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Главное меню</SheetTitle>
-            <SheetDescription>Навигация по разделам Neiroot.</SheetDescription>
+            <SheetDescription>Навигация по разделам Neiroot Ecosystem.</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
