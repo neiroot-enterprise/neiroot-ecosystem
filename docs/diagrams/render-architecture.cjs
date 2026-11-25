@@ -35,7 +35,7 @@ const dot = 'digraph SaaS {\n'
   +'}\n';
 const puml = '@startuml saas_architecture\n'
   +'skinparam shadowing false\nskinparam classAttributeIconSize 0\nskinparam linetype ortho\nhide circle\n'
-  +'top to bottom direction\ntitle Neiroot Enterprise v1 — архитектура SaaS v'+model.version+'\n\n'
+  +'top to bottom direction\ntitle Neiroot Ecosystem — архитектура SaaS v'+model.version+'\n\n'
   +model.nodes.map(n=>'class "'+n.name+'" as '+n.id+' <<'+n.st+'>> {\n'
     +n.stack.map(s=>'  '+s).join('\n')+'\n  --\n'
     +n.purpose.map(s=>'  '+s).join('\n')+'\n}').join('\n\n')+'\n\n'

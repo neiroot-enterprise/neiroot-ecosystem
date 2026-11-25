@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
 top to bottom direction
-title Neiroot Enterprise v1 — архитектура SaaS v0.7
+title Neiroot Ecosystem — архитектура SaaS v0.9
 
 class "Веб-интерфейс" as Web <<component>> {
   TypeScript
@@ -38,9 +38,9 @@ class "Ядро приложения" as Core <<microservice>> {
   chi / net/http
   PostgreSQL core
   --
-  Общие функции SaaS
-  Организации и доступ
-  Настройки платформы
+  Моя экосистема, деньги
+  Продажи и настройки
+  Личный порядок меню
 }
 
 class "Логистика" as Logistics <<microservice>> {

@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
 top to bottom direction
-title Ядро приложения — архитектура v0.1
+title Ядро приложения — архитектура v0.3
 class "API Gateway / Web BFF" as Gateway <<component>> {
   Go / chi
   Traefik
@@ -33,6 +33,13 @@ class "Файловое хранилище" as Files <<component>> {
   Изоляция по tenant_id
 }
 package "Ядро приложения / модульный монолит / Go" <<microservice>> {
+class "Моя экосистема" as Company <<module>> {
+  Go
+  PostgreSQL core / company
+  --
+  Структура бизнесов и юрлиц
+  Сотрудники и справочники
+}
 class "Деньги" as Money <<module>> {
   Go
   PostgreSQL core / money
@@ -40,19 +47,12 @@ class "Деньги" as Money <<module>> {
   Учёт денежных операций
   Кассы, банки и зарплата
 }
-class "Моя компания" as Company <<module>> {
-  Go
-  PostgreSQL core / company
-  --
-  Структура бизнесов и юрлиц
-  Сотрудники и справочники
-}
 class "Продажи" as Sales <<module>> {
   Go
   PostgreSQL core / sales
   --
-  Документы на оплату
-  Акты выполненных работ
+  Документы продаж
+  Номенклатура
 }
 class "Настройки" as Settings <<module>> {
   Go
@@ -60,6 +60,16 @@ class "Настройки" as Settings <<module>> {
   --
   Настраиваемые поля
   Бизнес-права доступа
+  Личный порядок меню
+}
+class "Разделы: Моя экосистема" as CompanySections <<sections>> {
+  Структура экосистемы
+  Предприятия и отделы
+  Сотрудники
+  Организации (юрлица)
+  Договоры
+  Контрагенты
+  Партнеры
 }
 class "Разделы: Деньги" as MoneySections <<sections>> {
   Касса
@@ -67,17 +77,10 @@ class "Разделы: Деньги" as MoneySections <<sections>> {
   Кредиты и займы
   Зарплата
 }
-class "Разделы: Моя компания" as CompanySections <<sections>> {
-  Сотрудники
-  Предприятия и отделы
-  Организации (юрлица)
-  Договоры
-  Контрагенты
-  Номенклатура
-}
 class "Разделы: Продажи" as SalesSections <<sections>> {
   Счета на оплату
   Акты выполненных работ
+  Номенклатура
 }
 class "Разделы: Настройки" as SettingsSections <<sections>> {
   Поля
@@ -120,12 +123,12 @@ Incoming ..> Application : Вызов порта
 Outgoing ..> Application : Реализация
 Application ..> Domain : Зависимость кода
 Gateway --> HTTP : 
-HTTP --> Money : Внутренний API
 HTTP --> Company : Внутренний API
+HTTP --> Money : Внутренний API
 HTTP --> Sales : Внутренний API
 HTTP --> Settings : Внутренний API
-Money *-- MoneySections : Состав разделов
 Company *-- CompanySections : Состав разделов
+Money *-- MoneySections : Состав разделов
 Sales *-- SalesSections : Состав разделов
 Settings *-- SettingsSections : Состав разделов
 Outgoing --> Database : Чтение / запись
